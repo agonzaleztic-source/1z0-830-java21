@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>1Z0-830 · Preparación Java SE 21</title>
+  <meta name="description" content="Temario, banco de preguntas con repetición espaciada y simulacros para la certificación Oracle Certified Professional Java SE 21 Developer.">
+  <meta name="theme-color" content="#131c24">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1 class="code">1Z0-830<small>Oracle Certified Professional · Java SE 21 Developer</small></h1>
+    <div class="cd">
+      <b id="cdDays">—</b>
+      <span>días para el examen</span>
+      <br><input type="date" id="examDate">
+    </div>
+  </header>
+
+  <div class="spec" id="spec"></div>
+  <div class="speclab" id="specLab"></div>
+
+  <nav id="nav"></nav>
+  <div id="view"></div>
+
+  <footer class="datos">
+    <h2>Progreso entre dispositivos</h2>
+    <p class="sub">El navegador guarda tu avance solo en este aparato. Para pasar del PC al móvil,
+      exporta el archivo y luego impórtalo en el otro.</p>
+    <div class="row">
+      <button class="btn" id="btnExport">Exportar progreso</button>
+      <button class="btn" id="btnImport">Importar progreso</button>
+      <input type="file" id="fileImport" accept="application/json" hidden>
+    </div>
+    <p class="aviso" id="avisoDatos"></p>
+  </footer>
+</div>
+
+<script src="js/storage.js"></script>
+<script src="js/data.js"></script>
+<script src="js/questions.js"></script>
+<script src="js/theory.js"></script>
+<script src="js/app.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

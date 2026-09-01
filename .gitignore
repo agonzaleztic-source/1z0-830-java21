@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+node_modules/
+*.log
+
+# fuente original comprimida
+java.zip
