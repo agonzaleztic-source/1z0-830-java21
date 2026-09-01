@@ -4,6 +4,8 @@ App de estudio para la certificación **Oracle Certified Professional: Java SE 2
 Sin dependencias, sin build, sin servidor: HTML, CSS y JavaScript a pelo. Se instala en el
 móvil como aplicación y funciona sin conexión.
 
+**App publicada:** https://agonzaleztic-source.github.io/1z0-830-java21/
+
 ## Qué hace
 
 - **Temario** con los diez grupos de objetivos que publica Oracle, desglosados en 71 puntos.
@@ -105,6 +107,7 @@ pendientes.
 1. Sube el repositorio a GitHub.
 2. *Settings* → *Pages* → *Source*: **Deploy from a branch**, rama `main`, carpeta `/ (root)`.
 3. En un par de minutos estará en `https://TU-USUARIO.github.io/NOMBRE-DEL-REPO/`.
+   En este repositorio ya está activado: https://agonzaleztic-source.github.io/1z0-830-java21/
 
 Las rutas del proyecto son relativas, así que funciona igual en la raíz del dominio que
 en un subdirectorio.
