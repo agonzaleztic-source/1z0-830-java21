@@ -96,7 +96,7 @@ function pintarNav(){
   TABS.forEach(([id,t]) => {
     const b = document.createElement('button');
     b.textContent = t; b.className = tab === id ? 'on' : '';
-    b.onclick = () => { tab = id; pintar(); };
+    b.onclick = () => { if(id === 'practica') libre = false; tab = id; pintar(); };
     n.appendChild(b);
   });
 }
@@ -144,7 +144,7 @@ function vistaHoy(v){
       '<div class="d">Abre Teoría y lee de corrido ' + areas.map(a=>AREA[a].ab).join(' y ') +
       '. Escribe tú el código de cada concepto en un IDE y marca los puntos que domines.</div></div>' +
       '<div class="topic"><div class="t">2 · Vacía la cola de repaso</div>' +
-      '<div class="d">' + cola.length + ' preguntas esperan. Lo que fallas vuelve mañana; lo que aciertas se aleja en el tiempo.</div></div>' +
+      '<div class="d">' + cola.length + ' preguntas esperan. Lo que fallas sigue en la cola de hoy hasta que lo aciertes; lo que aciertas se aleja en el tiempo.</div></div>' +
       '<div class="topic"><div class="t">3 · Un simulacro por semana</div>' +
       '<div class="d">A partir del bloque 8. Cincuenta preguntas, ciento veinte minutos, sin pausas y sin consultar nada.</div></div>' +
       '<div class="row" style="margin-top:16px">' +
@@ -432,21 +432,75 @@ function leerArea(v){
 
 /* ---------------- PRÁCTICA ---------------- */
 let actual = null, elegidas = [], resuelta = false;
+let libre = false;        // repaso fuera de la cola del día
+let recientes = [];       // últimas vistas, para que una fallada no salga acto seguido
+
+/* Cómo se lee un intervalo de la caja, en cristiano. */
+const cuando = n => n === 0 ? 'sigue en la cola de hoy'
+                  : n === 1 ? 'vuelve mañana'
+                  :           'vuelve en ' + n + ' días';
+
 function siguientePregunta(){
   const cola = pendientes(filtro);
   const pool = cola.length ? cola : (filtro ? Q.filter(q=>q.a===filtro) : Q);
-  actual = pool[Math.floor(Math.random()*pool.length)];
+  /* Una que acabas de fallar vuelve hoy, pero no en la pregunta siguiente:
+     responderla con el enunciado todavía fresco no enseña nada. */
+  const frescas = pool.filter(q => !recientes.includes(q.id));
+  const elegible = frescas.length ? frescas : pool;
+  actual = elegible[Math.floor(Math.random()*elegible.length)];
+  recientes.push(actual.id);
+  if(recientes.length > 6) recientes.shift();
   elegidas = []; resuelta = false;
 }
+
+/* Cola del día vacía: se avisa en vez de seguir sirviendo preguntas
+   que tocaban dentro de una semana. */
+function vistaHecho(v){
+  const q = filtro ? Q.filter(x=>x.a===filtro) : Q;
+  const fallos = q.filter(x => (S.srs[x.id]||{}).box === 0 && S.srs[x.id]).length;
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.innerHTML =
+    '<div class="qmeta"><span>' + (filtro ? AREA[filtro].n : 'todas las áreas') +
+    '</span><span>0 en cola</span></div>' +
+    '<h2>Hecho por hoy</h2>' +
+    '<p class="sub">No queda nada pendiente' + (filtro ? ' en esta área' : '') +
+    '. Lo que has acertado ha subido de caja y volverá a su debido tiempo; ' +
+    'lo que fallaste vuelve mañana. Descansar entre repasos es parte del método.</p>' +
+    '<div class="stat">' +
+      '<div><b>' + q.filter(x=>S.srs[x.id]).length + '/' + q.length + '</b><span>vistas</span></div>' +
+      '<div><b>' + fallos + '</b><span>en la caja de fallos</span></div>' +
+      '<div><b>' + listoGlobal() + '%</b><span>preparación global</span></div>' +
+    '</div>';
+  const fila = document.createElement('div');
+  fila.className = 'row'; fila.style.marginTop = '16px';
+  const b1 = document.createElement('button');
+  b1.className = 'btn pri'; b1.textContent = 'Repasar de todas formas';
+  b1.onclick = () => { libre = true; siguientePregunta(); pintar(); };
+  const b2 = document.createElement('button');
+  b2.className = 'btn'; b2.textContent = 'Leer teoría';
+  b2.onclick = () => abrirTeoria(filtro || AREAS[0].id);
+  fila.appendChild(b1); fila.appendChild(b2);
+  if(filtro){
+    const b3 = document.createElement('button');
+    b3.className = 'btn'; b3.textContent = 'Quitar filtro de área';
+    b3.onclick = () => { filtro = null; pintar(); };
+    fila.appendChild(b3);
+  }
+  c.appendChild(fila);
+  v.appendChild(c);
+}
 function vistaPractica(v){
+  const cola = pendientes(filtro).length;
+  if(!cola && !libre){ vistaHecho(v); return; }
   if(!actual || (filtro && actual.a !== filtro)) siguientePregunta();
   const q = actual, multi = q.k.length > 1;
-  const cola = pendientes(filtro).length;
 
   const c = document.createElement('div');
   c.className='card';
   c.innerHTML = '<div class="qmeta"><span>' + AREA[q.a].n + '</span>' +
-    '<span>' + cola + ' en cola' + (filtro ? ' · filtrado' : '') + '</span></div>' +
+    '<span>' + (libre && !cola ? 'repaso libre' : cola + ' en cola') +
+    (filtro ? ' · filtrado' : '') + '</span></div>' +
     '<h2>' + q.p + '</h2>' + (multi ? '<p class="sub">Elige ' + q.k.length + ' respuestas.</p>' : '');
   if(q.c){ const pre=document.createElement('pre'); pre.textContent=q.c; c.appendChild(pre); }
 
@@ -493,14 +547,22 @@ function vistaPractica(v){
     [...box.children].forEach((b,i) => {
       b.className = 'opt' + (q.k.includes(i) ? ' right' : (elegidas.includes(i) ? ' wrong' : ''));
     });
-    const st = S.srs[q.id] || {box:0, ok:0, fail:0};
-    if(bien){ st.box = Math.min(st.box+1, INTERVALOS.length-1); st.ok++; }
-    else { st.box = 0; st.fail++; }
-    st.due = masDias(INTERVALOS[st.box]);
-    S.srs[q.id] = st; guardar();
+    /* Si la pregunta no tocaba hoy es repaso libre: se corrige, pero no se
+       toca su planificación, para no adelantar ni retrasar la caja por gusto. */
+    const tocaba = !S.srs[q.id] || S.srs[q.id].due <= hoyISO();
+    let nota;
+    if(tocaba){
+      const st = S.srs[q.id] || {box:0, ok:0, fail:0};
+      if(bien){ st.box = Math.min(st.box+1, INTERVALOS.length-1); st.ok++; }
+      else { st.box = 0; st.fail++; }
+      st.due = masDias(INTERVALOS[st.box]);
+      S.srs[q.id] = st; guardar();
+      nota = (bien ? 'Correcto · ' : 'Fallo · ') + cuando(INTERVALOS[st.box]);
+    } else {
+      nota = (bien ? 'Correcto' : 'Fallo') + ' · repaso libre, no cambia la planificación';
+    }
     expl.innerHTML = '<div class="verdict" style="color:' + (bien?'var(--ok)':'var(--no)') + '">' +
-      (bien ? 'Correcto · vuelve en ' + INTERVALOS[st.box] + (INTERVALOS[st.box] === 1 ? ' día' : ' días')
-            : 'Fallo · vuelve mañana') + '</div>' +
+      nota + '</div>' +
       '<div class="exp">' + q.e + '</div>';
     pintarCabecera();
   };

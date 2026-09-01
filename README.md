@@ -13,7 +13,10 @@ móvil como aplicación y funciona sin conexión.
   índice de saltos arriba y navegación al área siguiente al final.
 - **Temario** con los diez grupos de objetivos que publica Oracle, desglosados en esos 71 puntos.
   Sirve como lista de control: cada punto se marca cuando lo dominas y despliega su teoría.
-- **Práctica** con repetición espaciada: lo que aciertas vuelve más tarde, lo que fallas vuelve mañana.
+- **Práctica** con repetición espaciada (cajas de 0, 1, 2, 4, 8, 16 y 30 días). Lo que aciertas
+  sube de caja y se aleja en el tiempo; lo que fallas cae a la caja 0, que es *hoy*, así que
+  sigue en la cola de la sesión hasta que lo aciertes. Cuando la cola se vacía, la vista lo
+  dice en vez de seguir sirviendo preguntas: ahí es cuando toca volver mañana.
 - **Simulacro** cronometrado a 50 preguntas y 120 minutos, con el 68 % como línea de aprobado.
 - **Plan** de 17 bloques que se reparten automáticamente entre hoy y la fecha del examen.
 - **Espectro de objetivos** en la cabecera: diez barras que muestran de un vistazo por dónde flojeas.
