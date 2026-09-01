@@ -410,7 +410,7 @@ const TEORIA = {
 ['c','Comparator<String> c = Comparator.nullsFirst(Comparator.naturalOrder());\nList<String> l = new ArrayList<>(Arrays.asList("b", null, "a"));\nl.sort(c);   // [null, a, b]'],
 ['x','reversed() da la vuelta a TODA la cadena construida hasta ese momento, no solo al último criterio. Si quieres invertir un único paso, hay que hacerlo dentro de ese paso con Comparator.reverseOrder().'],
 ['c','// invierte páginas Y título\n.comparing(Libro::getPaginas).thenComparing(Libro::getTitulo).reversed()\n\n// invierte solo el título\n.comparing(Libro::getPaginas)\n.thenComparing(Libro::getTitulo, Comparator.reverseOrder())'],
-['x','TreeSet y TreeMap necesitan un orden: o los elementos implementan Comparable, o les pasas un Comparator en el constructor. Si no, no falla al compilar, sino que lanza ClassCastException al insertar el segundo elemento.'],
+['x','TreeSet y TreeMap necesitan un orden: o los elementos implementan Comparable, o les pasas un Comparator en el constructor. Si no, no falla al compilar, sino que lanza ClassCastException en ejecución. Y salta ya en el PRIMER add: la implementación compara el elemento consigo mismo para validar el tipo, así que no hace falta que haya dos.'],
 ['x','Si compareTo dice que dos objetos son equivalentes, un TreeSet los considera el mismo elemento aunque equals diga que no. Por eso se recomienda que el orden natural sea coherente con equals: si no lo es, un TreeSet y un HashSet con los mismos datos tendrán tamaños distintos.']
 ],
 

@@ -18,6 +18,8 @@ móvil como aplicación y funciona sin conexión.
   sigue en la cola de la sesión hasta que lo aciertes. Cuando la cola se vacía, la vista lo
   dice en vez de seguir sirviendo preguntas: ahí es cuando toca volver mañana.
 - **Simulacro** cronometrado a 50 preguntas y 120 minutos, con el 68 % como línea de aprobado.
+  El banco tiene 243 preguntas, así que dos intentos seguidos comparten alrededor del 20 %:
+  el porcentaje mide lo que sabes, no lo que recuerdas del intento anterior.
 - **Plan** de 17 bloques que se reparten automáticamente entre hoy y la fecha del examen.
 - **Espectro de objetivos** en la cabecera: diez barras que muestran de un vistazo por dónde flojeas.
 
@@ -63,7 +65,9 @@ python3 -m http.server 5500
 
 ## Añadir preguntas
 
-Todo el banco está en `js/questions.js` como un array de objetos:
+Todo el banco está en `js/questions.js` como un array de objetos. Son 243 preguntas,
+entre 20 y 32 por área, con una media de 3,4 por punto del temario y un 82 % con
+fragmento de código:
 
 ```js
 {
