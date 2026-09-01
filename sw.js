@@ -8,7 +8,7 @@
    cualquier archivo. Si no, el navegador seguirá sirviendo la
    copia vieja y no verás tus cambios.
    ============================================================ */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = '1z0830-' + VERSION;
 
 const ARCHIVOS = [

@@ -8,7 +8,7 @@ let tab = 'hoy', filtro = null;
 
 function cargar(){
   const guardado = Store.get(KEY);
-  if(guardado) S = Object.assign(S, guardado);
+  if(guardado) S = Object.assign(S, sanearEstado(guardado));
   if(!S.examDate) S.examDate = porDefectoExamen();
   if(!S.inicio) S.inicio = hoyISO();
   pintar();
@@ -31,9 +31,18 @@ function masDias(n){
   const d = new Date(); d.setDate(d.getDate()+n);
   return d.toISOString().slice(0,10);
 }
+/* Escapa antes de meter cualquier valor dinámico en HTML. */
+const esc = s => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
+/* Solo acepta una fecha ISO. Antes trituraba cualquier cadena con split('-')
+   y devolvía el trozo tal cual, que acababa en innerHTML. */
 const fmt = iso => {
+  if(typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '—';
   const [y,m,d] = iso.split('-');
-  return d + ' ' + ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1];
+  const mes = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][+m-1];
+  return mes ? d + ' ' + mes : '—';
 };
 
 /* dominio por área: cuánto han subido de caja las preguntas de esa área */
@@ -111,7 +120,7 @@ function pintar(){
 
 /* ---------------- HOY ---------------- */
 function bloqueActual(){
-  const total = Math.max(dias(S.inicio, S.examDate), PLAN.length);
+  const total = Math.max(dias(S.inicio, S.examDate) || 0, PLAN.length);
   const paso = total / PLAN.length;
   const t = Math.max(dias(S.inicio, hoyISO()), 0);
   return Math.min(Math.floor(t / paso), PLAN.length - 1);
@@ -167,7 +176,6 @@ function pintarTeoria(clave){
   const bloques = (typeof TEORIA !== 'undefined' && TEORIA[clave]) || null;
   if(!bloques) return '<div class="teoria"><p class="pendiente">' +
     'Teoría todavía sin escribir para este punto.</p></div>';
-  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   return '<div class="teoria">' + bloques.map(([tipo, txt]) =>
       tipo === 'c' ? '<pre>' + esc(txt) + '</pre>'
     : tipo === 'x' ? '<div class="trampa">' + txt + '</div>'
@@ -587,9 +595,9 @@ function vistaSimulacro(v){
       'Sin apuntes, sin IDE y sin parar el cronómetro.</p>' +
       '<button class="btn pri" id="start">Empezar simulacro</button></div>' +
       (hist.length ? '<div class="card"><h2>Intentos anteriores</h2>' +
-        hist.map(m => '<div class="topic"><div class="t">' + m.pct + '% · ' +
-          m.ok + ' de ' + m.n + ' correctas</div><div class="d">' + fmt(m.d) +
-          ' · ' + m.min + ' minutos empleados</div></div>').join('') + '</div>' : '');
+        hist.map(m => '<div class="topic"><div class="t">' + esc(m.pct) + '% · ' +
+          esc(m.ok) + ' de ' + esc(m.n) + ' correctas</div><div class="d">' + esc(fmt(m.d)) +
+          ' · ' + esc(m.min) + ' minutos empleados</div></div>').join('') + '</div>' : '');
     const s = document.getElementById('start');
     if(s) s.onclick = () => {
       const pool = [...Q].sort(()=>Math.random()-0.5).slice(0, Math.min(50, Q.length));
@@ -667,7 +675,7 @@ function resultadoSimulacro(v){
   c.innerHTML = '<h2>' + pct + '% · ' + mock.ok + ' de ' + mock.qs.length + '</h2>' +
     '<p class="sub">' + (apto
       ? 'Por encima del 68% que Oracle exige para aprobar. Repasa igualmente cada fallo antes de pasar página.'
-      : 'Por debajo del 68% necesario. Los fallos ya están de vuelta en la cola de repaso para mañana.') + '</p>';
+      : 'Por debajo del 68% necesario. Los fallos ya están de vuelta en la cola de repaso de hoy.') + '</p>';
   mock.qs.forEach((q,n) => {
     const s = mock.resp[q.id] || [];
     const bien = s.length===q.k.length && s.every(i=>q.k.includes(i));
@@ -686,7 +694,7 @@ function resultadoSimulacro(v){
 
 /* ---------------- PLAN ---------------- */
 function vistaPlan(v){
-  const total = Math.max(dias(S.inicio, S.examDate), PLAN.length);
+  const total = Math.max(dias(S.inicio, S.examDate) || 0, PLAN.length);
   const paso = total / PLAN.length;
   const act = bloqueActual();
   const semanal = paso < 6.5;

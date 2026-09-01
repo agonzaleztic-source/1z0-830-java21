@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- La app no carga nada de fuera y no tiene scripts en línea, así que puede
+       permitirse una política estricta. Sin 'unsafe-inline' en script-src, un
+       onerror inyectado en el HTML no llega a ejecutarse. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>1Z0-830 · Preparación Java SE 21</title>
   <meta name="description" content="Temario, banco de preguntas con repetición espaciada y simulacros para la certificación Oracle Certified Professional Java SE 21 Developer.">
   <meta name="theme-color" content="#131c24">
