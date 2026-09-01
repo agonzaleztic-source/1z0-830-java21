@@ -87,7 +87,7 @@ function pintarCabecera(){
 /* ============================================================
    vistas
    ============================================================ */
-const TABS = [['hoy','Hoy'],['temario','Temario'],['practica','Práctica'],
+const TABS = [['hoy','Hoy'],['teoria','Teoría'],['temario','Temario'],['practica','Práctica'],
               ['simulacro','Simulacro'],['plan','Plan']];
 
 function pintarNav(){
@@ -105,7 +105,7 @@ function pintar(){
   pintarCabecera(); pintarNav();
   const v = document.getElementById('view');
   v.innerHTML = '';
-  ({hoy:vistaHoy, temario:vistaTemario, practica:vistaPractica,
+  ({hoy:vistaHoy, teoria:vistaTeoria, temario:vistaTemario, practica:vistaPractica,
     simulacro:vistaSimulacro, plan:vistaPlan})[tab](v);
 }
 
@@ -141,17 +141,19 @@ function vistaHoy(v){
       '<h2>Rutina del día</h2>' +
       '<p class="sub">Cuarenta minutos bien puestos rinden más que tres horas de leer en diagonal.</p>' +
       '<div class="topic"><div class="t">1 · Estudia el tema del bloque</div>' +
-      '<div class="d">Abre Temario, lee los puntos de ' + areas.map(a=>AREA[a].ab).join(' y ') +
-      ' y escribe tú el código de cada concepto en un IDE. Márcalos cuando los domines.</div></div>' +
+      '<div class="d">Abre Teoría y lee de corrido ' + areas.map(a=>AREA[a].ab).join(' y ') +
+      '. Escribe tú el código de cada concepto en un IDE y marca los puntos que domines.</div></div>' +
       '<div class="topic"><div class="t">2 · Vacía la cola de repaso</div>' +
       '<div class="d">' + cola.length + ' preguntas esperan. Lo que fallas vuelve mañana; lo que aciertas se aleja en el tiempo.</div></div>' +
       '<div class="topic"><div class="t">3 · Un simulacro por semana</div>' +
       '<div class="d">A partir del bloque 8. Cincuenta preguntas, ciento veinte minutos, sin pausas y sin consultar nada.</div></div>' +
       '<div class="row" style="margin-top:16px">' +
-        '<button class="btn pri" id="goPract">Practicar ahora</button>' +
+        '<button class="btn pri" id="goTeo">Leer la teoría</button>' +
+        '<button class="btn" id="goPract">Practicar ahora</button>' +
         '<button class="btn" id="goTem">Ver temario</button>' +
       '</div>' +
     '</div>';
+  document.getElementById('goTeo').onclick = () => abrirTeoria(areas[0]);
   document.getElementById('goPract').onclick = () => { filtro=null; tab='practica'; pintar(); };
   document.getElementById('goTem').onclick = () => { filtro=areas[0]; tab='temario'; pintar(); };
 }
@@ -226,7 +228,11 @@ function vistaTemario(v){
         bm.className = 'btn pri';
         bm.textContent = marcado ? 'Desmarcar' : 'Lo domino';
         bm.onclick = () => { S.syl[k] = !marcado; guardar(); pintar(); };
-        acc.appendChild(bm); acc.appendChild(bp);
+        const bl = document.createElement('button');
+        bl.className = 'btn';
+        bl.textContent = 'Leer el área entera';
+        bl.onclick = () => abrirTeoria(a.id, i);
+        acc.appendChild(bm); acc.appendChild(bl); acc.appendChild(bp);
         cuerpo.appendChild(acc);
         d.appendChild(cuerpo);
       }
@@ -241,6 +247,186 @@ function vistaTemario(v){
     b.textContent = 'Ver las diez áreas';
     b.onclick = () => { filtro = null; pintar(); };
     v.appendChild(b);
+  }
+}
+
+/* ---------------- TEORÍA ---------------- */
+/* El Temario sirve para marcar lo que dominas, punto por punto.
+   Este apartado es para lo otro: sentarse a leer un área entera de corrido. */
+let areaTeoria = null;   // área que se está leyendo; null = índice de las diez
+let irAPunto = null;     // clave a la que saltar en cuanto se pinte
+
+const bloquesDe = area =>
+  (SYL[area] || []).reduce((n, _, i) => n + hayTeoriaEn(area + ':' + i).length, 0);
+const hayTeoriaEn = clave =>
+  (typeof TEORIA !== 'undefined' && TEORIA[clave]) || [];
+
+function abrirTeoria(area, punto){
+  areaTeoria = area;
+  irAPunto = (punto == null) ? null : area + ':' + punto;
+  S.ultimaArea = area;
+  tab = 'teoria';
+  guardar();
+  pintar();
+}
+
+function vistaTeoria(v){
+  if(areaTeoria) leerArea(v); else indiceTeoria(v);
+}
+
+/* ---- índice: las diez áreas ---- */
+function indiceTeoria(v){
+  const puntos = AREAS.reduce((n,a) => n + (SYL[a.id]||[]).length, 0);
+  const bloques = AREAS.reduce((n,a) => n + bloquesDe(a.id), 0);
+
+  const cab = document.createElement('div');
+  cab.className = 'card';
+  cab.innerHTML =
+    '<div class="qmeta"><span>teoría</span><span>' + puntos + ' puntos · ' +
+    bloques + ' apartados</span></div>' +
+    '<h2>Los diez grupos de objetivos</h2>' +
+    '<p class="sub">Aquí está la materia entera, explicada y con el código comentado. ' +
+    'Fallar preguntas afila lo que ya sabes, pero primero hay que haberlo leído. ' +
+    'Elige un área y léela de corrido; el examen no pregunta por temas sueltos.</p>';
+
+  if(S.ultimaArea && AREA[S.ultimaArea]){
+    const fila = document.createElement('div');
+    fila.className = 'row';
+    fila.style.marginTop = '16px';
+    const b = document.createElement('button');
+    b.className = 'btn pri';
+    b.textContent = 'Seguir con ' + AREA[S.ultimaArea].n.toLowerCase();
+    b.onclick = () => abrirTeoria(S.ultimaArea);
+    fila.appendChild(b);
+    cab.appendChild(fila);
+  }
+  v.appendChild(cab);
+
+  const lista = document.createElement('div');
+  lista.className = 'card';
+  lista.innerHTML = '<div class="lista"></div>';
+  const L = lista.querySelector('.lista');
+
+  AREAS.forEach((a, i) => {
+    const n = (SYL[a.id] || []).length;
+    const pct = temarioPct(a.id);
+    const d = document.createElement('div');
+    d.className = 'topic' + (pct === 100 ? ' done' : '');
+    const b = document.createElement('button');
+    b.className = 'abrir areab';
+    b.innerHTML =
+      '<div class="t"><span class="num">' + String(i+1).padStart(2,'0') + '</span>' +
+      a.n + '</div>' +
+      '<div class="d">' + n + ' puntos · ' + bloquesDe(a.id) + ' apartados · ' +
+      pct + '% marcado</div>';
+    b.onclick = () => abrirTeoria(a.id);
+    d.appendChild(b);
+    L.appendChild(d);
+  });
+  v.appendChild(lista);
+}
+
+/* ---- lectura de un área completa ---- */
+function leerArea(v){
+  const a = AREA[areaTeoria];
+  const t = SYL[areaTeoria] || [];
+  const hechos = t.filter((_,i) => S.syl[areaTeoria+':'+i]).length;
+
+  const cab = document.createElement('div');
+  cab.className = 'card';
+  cab.innerHTML =
+    '<div class="qmeta"><span>' + a.ab + '</span><span>' + hechos + ' de ' +
+    t.length + ' marcados</span></div>' +
+    '<h2>' + a.n + '</h2>' +
+    '<p class="sub">' + t.length + ' puntos · ' + bloquesDe(areaTeoria) +
+    ' apartados de teoría.</p>' +
+    '<div class="salto"></div>';
+
+  const salto = cab.querySelector('.salto');
+  t.forEach((x, i) => {
+    const b = document.createElement('button');
+    b.className = 'idx' + (S.syl[areaTeoria+':'+i] ? ' ok' : '');
+    b.textContent = (i+1) + ' · ' + x[0];
+    b.onclick = () => {
+      const el = document.getElementById('pt-' + areaTeoria + '-' + i);
+      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    salto.appendChild(b);
+  });
+
+  const fila = document.createElement('div');
+  fila.className = 'row';
+  fila.style.marginTop = '16px';
+  const volver = document.createElement('button');
+  volver.className = 'btn';
+  volver.textContent = 'Todas las áreas';
+  volver.onclick = () => { areaTeoria = null; pintar(); window.scrollTo(0,0); };
+  const practicar = document.createElement('button');
+  practicar.className = 'btn pri';
+  practicar.textContent = 'Practicar ' + a.ab;
+  practicar.onclick = () => { filtro = areaTeoria; tab = 'practica'; siguientePregunta(); pintar(); };
+  fila.appendChild(volver); fila.appendChild(practicar);
+  cab.appendChild(fila);
+  v.appendChild(cab);
+
+  t.forEach((x, i) => {
+    const k = areaTeoria + ':' + i;
+    const marcado = !!S.syl[k];
+    const c = document.createElement('div');
+    c.className = 'card punto' + (marcado ? ' done' : '');
+    c.id = 'pt-' + areaTeoria + '-' + i;
+    c.innerHTML =
+      '<div class="qmeta"><span>punto ' + (i+1) + ' de ' + t.length + '</span>' +
+      '<span>' + (marcado ? 'dominado' : '') + '</span></div>' +
+      '<h2>' + x[0] + '</h2>' +
+      '<p class="sub">' + x[1] + '</p>' +
+      pintarTeoria(k);
+
+    const acc = document.createElement('div');
+    acc.className = 'row';
+    acc.style.marginTop = '4px';
+    const bm = document.createElement('button');
+    bm.className = 'btn' + (marcado ? '' : ' pri');
+    bm.textContent = marcado ? 'Desmarcar' : 'Lo domino';
+    bm.onclick = () => {
+      S.syl[k] = !marcado;
+      guardar();
+      irAPunto = k;      // al repintar, quedarse donde estabas
+      pintar();
+    };
+    acc.appendChild(bm);
+    c.appendChild(acc);
+    v.appendChild(c);
+  });
+
+  /* ---- saltar al área anterior o siguiente ---- */
+  const pos = AREAS.findIndex(x => x.id === areaTeoria);
+  const pie = document.createElement('div');
+  pie.className = 'card';
+  pie.innerHTML = '<p class="sub">Has llegado al final de ' + a.n.toLowerCase() + '.</p>';
+  const nav = document.createElement('div');
+  nav.className = 'row';
+  if(pos > 0){
+    const ant = document.createElement('button');
+    ant.className = 'btn';
+    ant.textContent = '← ' + AREAS[pos-1].n;
+    ant.onclick = () => { abrirTeoria(AREAS[pos-1].id); window.scrollTo(0,0); };
+    nav.appendChild(ant);
+  }
+  if(pos < AREAS.length - 1){
+    const sig = document.createElement('button');
+    sig.className = 'btn pri';
+    sig.textContent = AREAS[pos+1].n + ' →';
+    sig.onclick = () => { abrirTeoria(AREAS[pos+1].id); window.scrollTo(0,0); };
+    nav.appendChild(sig);
+  }
+  pie.appendChild(nav);
+  v.appendChild(pie);
+
+  if(irAPunto){
+    const el = document.getElementById('pt-' + irAPunto.replace(':','-'));
+    if(el) el.scrollIntoView({block:'start'});
+    irAPunto = null;
   }
 }
 

@@ -8,8 +8,11 @@ móvil como aplicación y funciona sin conexión.
 
 ## Qué hace
 
-- **Temario** con los diez grupos de objetivos que publica Oracle, desglosados en 71 puntos.
-  Cada punto se despliega con teoría: explicación, código comentado y las trampas del examen.
+- **Teoría** completa: los 71 puntos del temario explicados en 664 apartados entre párrafos,
+  fragmentos de código comentado y trampas del examen. Se lee un área entera de corrido, con
+  índice de saltos arriba y navegación al área siguiente al final.
+- **Temario** con los diez grupos de objetivos que publica Oracle, desglosados en esos 71 puntos.
+  Sirve como lista de control: cada punto se marca cuando lo dominas y despliega su teoría.
 - **Práctica** con repetición espaciada: lo que aciertas vuelve más tarde, lo que fallas vuelve mañana.
 - **Simulacro** cronometrado a 50 preguntas y 120 minutos, con el 68 % como línea de aprobado.
 - **Plan** de 17 bloques que se reparten automáticamente entre hoy y la fecha del examen.
@@ -98,9 +101,9 @@ Los puntos sin entrada aparecen marcados como «sin teoría» y siguen siendo ut
 la app no se rompe por tener huecos. El código se escapa antes de insertarlo, así que
 puedes usar `<` y `>` sin problema.
 
-Cobertura actual: las áreas **tipos**, **flujo** y **poo** están completas (23 puntos,
-que corresponden a los siete primeros bloques del plan). Las siete áreas restantes están
-pendientes.
+Cobertura actual: las diez áreas están completas, los 71 puntos del temario. Ninguno
+aparece ya como «sin teoría». El reparto por área anda entre los 42 apartados de *flujo* y
+los 105 de *streams*.
 
 ## Publicar en GitHub Pages
 

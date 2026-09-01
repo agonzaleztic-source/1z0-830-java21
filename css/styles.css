@@ -91,6 +91,23 @@
   .pendiente{color:var(--mut);font-style:italic}
   @media(max-width:600px){ .teoria{margin-left:0;padding-left:12px} }
 
+  /* ---- apartado de teoría ---- */
+  .areab .num{font-family:var(--mono);font-size:11px;color:var(--dim);margin-right:10px}
+  .areab:hover .num{color:var(--acc)}
+
+  .salto{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .idx{background:var(--raise);border:1px solid var(--line);border-radius:3px;color:var(--mut);
+    font-family:var(--sans);font-size:12px;padding:5px 10px;cursor:pointer;text-align:left;
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .idx:hover{color:var(--tx);border-color:var(--acc)}
+  .idx.ok{color:var(--ok);border-color:#2f4a37}
+
+  .punto{scroll-margin-top:14px}
+  .punto h2{margin-bottom:2px}
+  .punto.done h2{color:var(--mut)}
+  .punto .teoria{margin-left:0;border-left-color:var(--raise)}
+  .punto .qmeta span:last-child{color:var(--ok)}
+
   /* ---- plan ---- */
   .wk{display:grid;grid-template-columns:74px 1fr auto;gap:14px;align-items:baseline;
     padding:10px 0;border-bottom:1px solid var(--line)}
