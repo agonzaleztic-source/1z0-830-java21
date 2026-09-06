@@ -84,9 +84,11 @@ function pintarCabecera(){
     const b = document.createElement('button');
     b.className = filtro === a.id ? 'sel' : '';
     b.title = a.n + ' · ' + pct + '% listo';
-    b.innerHTML = '<span class="pct">' + (pct||'') + '</span>' +
-      '<span class="bar" style="height:' + Math.max(pct, 4) + '%"></span>';
-    b.onclick = () => { filtro = filtro === a.id ? null : a.id; tab = 'practica'; pintar(); };
+    b.setAttribute('aria-pressed', filtro === a.id ? 'true' : 'false');
+    b.setAttribute('aria-label', a.n + ', ' + pct + ' por ciento listo, filtrar práctica por esta área');
+    b.innerHTML = '<span class="pct" aria-hidden="true">' + (pct||'') + '</span>' +
+      '<span class="bar" aria-hidden="true" style="height:' + Math.max(pct, 4) + '%"></span>';
+    b.onclick = () => { filtro = filtro === a.id ? null : a.id; irATab('practica'); };
     spec.appendChild(b);
     const s = document.createElement('span');
     s.textContent = a.ab; lab.appendChild(s);
@@ -105,7 +107,8 @@ function pintarNav(){
   TABS.forEach(([id,t]) => {
     const b = document.createElement('button');
     b.textContent = t; b.className = tab === id ? 'on' : '';
-    b.onclick = () => { if(id === 'practica') libre = false; tab = id; pintar(); };
+    if(tab === id) b.setAttribute('aria-current', 'page');
+    b.onclick = () => { if(id === 'practica') libre = false; irATab(id); };
     n.appendChild(b);
   });
 }
@@ -116,6 +119,23 @@ function pintar(){
   v.innerHTML = '';
   ({hoy:vistaHoy, teoria:vistaTeoria, temario:vistaTemario, practica:vistaPractica,
     simulacro:vistaSimulacro, plan:vistaPlan})[tab](v);
+}
+
+/* Anuncia un mensaje a lectores de pantalla sin robar el foco. */
+function anunciar(msg){
+  const el = document.getElementById('live');
+  if(el) el.textContent = msg;
+}
+/* Tras un cambio de sección o de pregunta, el contenido viejo se destruye y
+   recrea entero (innerHTML=''), así que el foco del teclado se pierde y cae
+   al body sin avisar. Lo devolvemos al contenedor de la vista en vez de
+   dejarlo perdido. */
+function enfocarVista(){
+  const v = document.getElementById('view');
+  if(v) v.focus({preventScroll:true});
+}
+function irATab(id){
+  tab = id; pintar(); enfocarVista();
 }
 
 /* ---------------- HOY ---------------- */
@@ -163,8 +183,8 @@ function vistaHoy(v){
       '</div>' +
     '</div>';
   document.getElementById('goTeo').onclick = () => abrirTeoria(areas[0]);
-  document.getElementById('goPract').onclick = () => { filtro=null; tab='practica'; pintar(); };
-  document.getElementById('goTem').onclick = () => { filtro=areas[0]; tab='temario'; pintar(); };
+  document.getElementById('goPract').onclick = () => { filtro=null; irATab('practica'); };
+  document.getElementById('goTem').onclick = () => { filtro=areas[0]; irATab('temario'); };
 }
 const listoGlobal = () => Math.round(AREAS.reduce((t,a)=>t+listo(a.id),0)/AREAS.length);
 
@@ -204,15 +224,19 @@ function vistaTemario(v){
       const fila = document.createElement('div');
       fila.className = 'fila';
 
+      const idCuerpo = 'cuerpo-' + k.replace(':', '-');
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.checked = marcado;
       cb.title = 'Marcar como dominado';
+      cb.setAttribute('aria-label', 'Marcar «' + x[0] + '» como dominado');
       cb.onclick = ev => ev.stopPropagation();
       cb.onchange = () => { S.syl[k] = cb.checked; guardar(); pintar(); };
 
       const txt = document.createElement('button');
       txt.className = 'abrir' + (abierto === k ? ' on' : '');
+      txt.setAttribute('aria-expanded', abierto === k ? 'true' : 'false');
+      txt.setAttribute('aria-controls', idCuerpo);
       txt.innerHTML = '<div class="t">' + x[0] +
         (hayTeoria ? '' : ' <span class="tg">sin teoría</span>') + '</div>' +
         '<div class="d">' + x[1] + '</div>';
@@ -224,6 +248,7 @@ function vistaTemario(v){
 
       if(abierto === k){
         const cuerpo = document.createElement('div');
+        cuerpo.id = idCuerpo;
         cuerpo.innerHTML = pintarTeoria(k);
         const acc = document.createElement('div');
         acc.className = 'row';
@@ -231,7 +256,7 @@ function vistaTemario(v){
         const bp = document.createElement('button');
         bp.className = 'btn';
         bp.textContent = 'Practicar ' + AREA[a.id].ab;
-        bp.onclick = () => { filtro = a.id; tab = 'practica'; siguientePregunta(); pintar(); };
+        bp.onclick = () => { filtro = a.id; tab = 'practica'; siguientePregunta(); pintar(); enfocarVista(); };
         const bm = document.createElement('button');
         bm.className = 'btn pri';
         bm.textContent = marcado ? 'Desmarcar' : 'Lo domino';
@@ -253,7 +278,7 @@ function vistaTemario(v){
     const b = document.createElement('button');
     b.className = 'btn';
     b.textContent = 'Ver las diez áreas';
-    b.onclick = () => { filtro = null; pintar(); };
+    b.onclick = () => { filtro = null; pintar(); enfocarVista(); };
     v.appendChild(b);
   }
 }
@@ -276,6 +301,7 @@ function abrirTeoria(area, punto){
   tab = 'teoria';
   guardar();
   pintar();
+  enfocarVista();
 }
 
 function vistaTeoria(v){
@@ -368,11 +394,11 @@ function leerArea(v){
   const volver = document.createElement('button');
   volver.className = 'btn';
   volver.textContent = 'Todas las áreas';
-  volver.onclick = () => { areaTeoria = null; pintar(); window.scrollTo(0,0); };
+  volver.onclick = () => { areaTeoria = null; pintar(); window.scrollTo(0,0); enfocarVista(); };
   const practicar = document.createElement('button');
   practicar.className = 'btn pri';
   practicar.textContent = 'Practicar ' + a.ab;
-  practicar.onclick = () => { filtro = areaTeoria; tab = 'practica'; siguientePregunta(); pintar(); };
+  practicar.onclick = () => { filtro = areaTeoria; tab = 'practica'; siguientePregunta(); pintar(); enfocarVista(); };
   fila.appendChild(volver); fila.appendChild(practicar);
   cab.appendChild(fila);
   v.appendChild(cab);
@@ -484,7 +510,7 @@ function vistaHecho(v){
   fila.className = 'row'; fila.style.marginTop = '16px';
   const b1 = document.createElement('button');
   b1.className = 'btn pri'; b1.textContent = 'Repasar de todas formas';
-  b1.onclick = () => { libre = true; siguientePregunta(); pintar(); };
+  b1.onclick = () => { libre = true; siguientePregunta(); pintar(); enfocarVista(); };
   const b2 = document.createElement('button');
   b2.className = 'btn'; b2.textContent = 'Leer teoría';
   b2.onclick = () => abrirTeoria(filtro || AREAS[0].id);
@@ -513,9 +539,12 @@ function vistaPractica(v){
   if(q.c){ const pre=document.createElement('pre'); pre.textContent=q.c; c.appendChild(pre); }
 
   const box = document.createElement('div');
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', multi ? 'Opciones, elige ' + q.k.length : 'Opciones');
   q.o.forEach((op,i) => {
     const b = document.createElement('button');
     b.className='opt'; b.textContent = op;
+    b.setAttribute('aria-pressed', 'false');
     b.onclick = () => {
       if(resuelta) return;
       if(multi){
@@ -534,7 +563,7 @@ function vistaPractica(v){
   bComp.className='btn pri'; bComp.textContent='Comprobar';
   const bSig = document.createElement('button');
   bSig.className='btn'; bSig.textContent='Siguiente';
-  bSig.onclick = () => { siguientePregunta(); pintar(); };
+  bSig.onclick = () => { siguientePregunta(); pintar(); enfocarVista(); };
   acciones.appendChild(bComp); acciones.appendChild(bSig);
   c.appendChild(acciones);
 
@@ -544,7 +573,9 @@ function vistaPractica(v){
 
   function refrescar(){
     [...box.children].forEach((b,i) => {
-      b.className = 'opt' + (elegidas.includes(i) ? ' pick' : '');
+      const marcada = elegidas.includes(i);
+      b.className = 'opt' + (marcada ? ' pick' : '');
+      b.setAttribute('aria-pressed', marcada ? 'true' : 'false');
     });
     bComp.disabled = elegidas.length === 0;
   }
@@ -553,7 +584,11 @@ function vistaPractica(v){
     resuelta = true;
     const bien = elegidas.length === q.k.length && elegidas.every(i => q.k.includes(i));
     [...box.children].forEach((b,i) => {
-      b.className = 'opt' + (q.k.includes(i) ? ' right' : (elegidas.includes(i) ? ' wrong' : ''));
+      const correcta = q.k.includes(i), marcada = elegidas.includes(i);
+      b.className = 'opt' + (correcta ? ' right' : (marcada ? ' wrong' : ''));
+      b.setAttribute('aria-disabled', 'true');
+      if(correcta) b.append(' — correcta');
+      else if(marcada) b.append(' — tu respuesta, incorrecta');
     });
     /* Si la pregunta no tocaba hoy es repaso libre: se corrige, pero no se
        toca su planificación, para no adelantar ni retrasar la caja por gusto. */
@@ -573,13 +608,14 @@ function vistaPractica(v){
       nota + '</div>' +
       '<div class="exp">' + q.e + '</div>';
     pintarCabecera();
+    anunciar(nota);
   };
   refrescar();
 
   if(filtro){
     const b = document.createElement('button');
     b.className='btn'; b.textContent='Quitar filtro de área';
-    b.onclick = ()=>{ filtro=null; siguientePregunta(); pintar(); };
+    b.onclick = ()=>{ filtro=null; siguientePregunta(); pintar(); enfocarVista(); };
     v.appendChild(b);
   }
 }
@@ -602,7 +638,7 @@ function vistaSimulacro(v){
     if(s) s.onclick = () => {
       const pool = [...Q].sort(()=>Math.random()-0.5).slice(0, Math.min(50, Q.length));
       mock = {qs:pool, i:0, resp:{}, fin:Date.now()+120*60000, ini:Date.now()};
-      pintar();
+      pintar(); enfocarVista();
     };
     return;
   }
@@ -613,27 +649,27 @@ function vistaSimulacro(v){
   const c = document.createElement('div');
   c.className='card';
   c.innerHTML = '<div class="qmeta"><span>pregunta ' + (mock.i+1) + ' de ' + mock.qs.length +
-    '</span><span class="timer" id="tm"></span></div><h2>' + q.p + '</h2>' +
-    (multi ? '<p class="sub">Elige ' + q.k.length + ' respuestas.</p>' : '');
+    '</span><span class="timer" id="tm" role="timer" aria-live="off"></span></div><h2>' + q.p + '</h2>' +
+    (multi ? '<p class="sub">Elige ' + q.k.length + ' respuestas.</p>' : '') +
+    '<p class="sub sr-only">Atajos de teclado: teclas del 1 al 9 marcan una opción, ' +
+    'flecha izquierda va a la pregunta anterior, flecha derecha a la siguiente.</p>';
   if(q.c){ const pre=document.createElement('pre'); pre.textContent=q.c; c.appendChild(pre); }
   const box=document.createElement('div');
+  box.setAttribute('role', 'group');
+  box.setAttribute('aria-label', multi ? 'Opciones, elige ' + q.k.length : 'Opciones');
   q.o.forEach((op,i)=>{
     const b=document.createElement('button');
     b.className='opt' + (sel.includes(i)?' pick':''); b.textContent=op;
-    b.onclick=()=>{
-      const s = mock.resp[q.id] || [];
-      if(multi){ const j=s.indexOf(i); j>=0?s.splice(j,1):s.push(i); }
-      else { s.length=0; s.push(i); }
-      mock.resp[q.id]=s; pintar();
-    };
+    b.setAttribute('aria-pressed', sel.includes(i) ? 'true' : 'false');
+    b.onclick=()=> elegirOpcionSimulacro(q, i);
     box.appendChild(b);
   });
   c.appendChild(box);
   const r=document.createElement('div'); r.className='row'; r.style.marginTop='12px';
   const prev=document.createElement('button'); prev.className='btn'; prev.textContent='Anterior';
-  prev.disabled = mock.i===0; prev.onclick=()=>{mock.i--;pintar();};
+  prev.disabled = mock.i===0; prev.onclick=()=>{mock.i--;pintar();enfocarVista();};
   const next=document.createElement('button'); next.className='btn'; next.textContent='Siguiente';
-  next.disabled = mock.i===mock.qs.length-1; next.onclick=()=>{mock.i++;pintar();};
+  next.disabled = mock.i===mock.qs.length-1; next.onclick=()=>{mock.i++;pintar();enfocarVista();};
   const end=document.createElement('button'); end.className='btn pri'; end.textContent='Entregar';
   end.onclick=()=>terminarSimulacro();
   r.appendChild(prev); r.appendChild(next); r.appendChild(end);
@@ -650,6 +686,28 @@ function vistaSimulacro(v){
   };
   reloj(); tic = setInterval(reloj, 1000);
 }
+/* Selección de una opción en el simulacro; la comparte el clic del ratón
+   y los atajos de teclado (dígitos 1-9) para no duplicar la lógica. */
+function elegirOpcionSimulacro(q, i){
+  const s = mock.resp[q.id] || [];
+  const multi = q.k.length > 1;
+  if(multi){ const j=s.indexOf(i); j>=0?s.splice(j,1):s.push(i); }
+  else { s.length=0; s.push(i); }
+  mock.resp[q.id]=s; pintar();
+}
+document.addEventListener('keydown', e => {
+  if(tab !== 'simulacro' || !mock || mock.hecho) return;
+  if(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+  const q = mock.qs[mock.i];
+  if(/^[1-9]$/.test(e.key)){
+    const i = +e.key - 1;
+    if(i < q.o.length){ e.preventDefault(); elegirOpcionSimulacro(q, i); }
+  } else if(e.key === 'ArrowRight' && mock.i < mock.qs.length - 1){
+    e.preventDefault(); mock.i++; pintar(); enfocarVista();
+  } else if(e.key === 'ArrowLeft' && mock.i > 0){
+    e.preventDefault(); mock.i--; pintar(); enfocarVista();
+  }
+});
 function terminarSimulacro(){
   clearInterval(tic);
   let ok = 0;
@@ -664,9 +722,11 @@ function terminarSimulacro(){
     S.srs[q.id] = st;
   });
   mock.hecho = true; mock.ok = ok;
-  S.mocks.push({d:hoyISO(), n:mock.qs.length, ok, pct:Math.round(ok/mock.qs.length*100),
+  const pct = Math.round(ok/mock.qs.length*100);
+  S.mocks.push({d:hoyISO(), n:mock.qs.length, ok, pct,
                 min:Math.round((Date.now()-mock.ini)/60000)});
-  guardar(); pintar();
+  guardar(); pintar(); enfocarVista();
+  anunciar('Simulacro entregado. ' + pct + ' por ciento, ' + ok + ' de ' + mock.qs.length + ' correctas.');
 }
 function resultadoSimulacro(v){
   const pct = Math.round(mock.ok/mock.qs.length*100);
@@ -688,7 +748,7 @@ function resultadoSimulacro(v){
   });
   const b=document.createElement('button'); b.className='btn pri'; b.textContent='Volver';
   b.style.marginTop='14px';
-  b.onclick=()=>{mock=null;pintar();};
+  b.onclick=()=>{mock=null;pintar();enfocarVista();};
   c.appendChild(b); v.appendChild(c);
 }
 

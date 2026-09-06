@@ -1643,5 +1643,473 @@ System.out.println(LocalDate.of(2026,3,15).format(f));`,
 {id:'l20',a:'l10n',p:'¿Qué imprime?',c:`System.out.println(MessageFormat.format("no cambia {0}", "X"));
 System.out.println(MessageFormat.format("'{0}' literal", "X"));`,
  o:['no cambia X y X literal','no cambia X y {0} literal','no cambia {0} y X literal','Lanza excepción'],k:[1],
- e:'La comilla simple es el carácter de escape de MessageFormat: encerrar un marcador entre comillas lo desactiva y se imprime tal cual. Para una comilla literal hay que duplicarla. En español, con textos que llevan apóstrofos, esto muerde de verdad.'}
+ e:'La comilla simple es el carácter de escape de MessageFormat: encerrar un marcador entre comillas lo desactiva y se imprime tal cual. Para una comilla literal hay que duplicarla. En español, con textos que llevan apóstrofos, esto muerde de verdad.'},
+
+/* ---- ampliación 2: mod ---- */
+{id:'m21',a:'mod',p:'¿Qué diferencia hay entre requires y requires static?',c:`module app {
+    requires static informes;
+}`,
+ o:['requires static hace la dependencia obligatoria solo en compilación, opcional en tiempo de ejecución','requires static carga el módulo de forma perezosa','requires static es sinónimo de requires transitive','requires static prohíbe usar el módulo en tiempo de ejecución'],k:[0],
+ e:'requires static declara una dependencia obligatoria para compilar pero opcional al ejecutar: si el módulo no está presente en tiempo de ejecución y el código que lo usa no llega a ejecutarse, el programa funciona igual. Es útil para anotaciones o utilidades que solo hacen falta en algunos entornos.'},
+
+{id:'m22',a:'mod',p:'¿Qué efecto tiene una exportación calificada como esta?',c:`module app {
+    exports com.tienda.interno to com.tienda.tests;
+}`,
+ o:['El paquete queda visible para cualquier módulo que lo requiera','Solo el módulo com.tienda.tests puede acceder a los tipos públicos de ese paquete','Se exporta a todos los módulos del mismo JAR','Equivale a exports sin más, to es solo documentación'],k:[1],
+ e:'exports ... to restringe la visibilidad a la lista de módulos indicada, normalmente para exponer utilidades de prueba sin abrir el paquete al mundo. Los módulos no listados no pueden compilar ni ejecutar código que use esos tipos, aunque los requieran.'},
+
+{id:'m23',a:'mod',p:'Un módulo declara uses com.api.Traductor pero ningún módulo del sistema aporta provides para ese servicio. ¿Qué ocurre al llamar a ServiceLoader.load(Traductor.class).iterator()?',
+ o:['Lanza ServiceConfigurationError','Devuelve un iterador sin elementos, sin lanzar nada','No compila','Lanza NoSuchElementException al crear el ServiceLoader'],k:[1],
+ e:'ServiceLoader.load no exige que exista al menos un proveedor: si no encuentra ninguno, el iterador simplemente no tiene elementos. El código consumidor debe estar preparado para esa ausencia, por ejemplo con un valor por defecto.'},
+
+{id:'m24',a:'mod',p:'¿Qué ocurre con este module-info?',c:`module app {
+    requires datos;
+    requires datos;
+}`,
+ o:['Compila, la segunda línea se ignora','No compila: no se puede requerir el mismo módulo dos veces','Compila y datos se carga dos veces','Solo compila si la segunda lleva transitive'],k:[1],
+ e:'Declarar requires del mismo módulo más de una vez es error de compilación, igual que ocurre con exports repetidos del mismo paquete. Cada directiva debe aparecer una sola vez por módulo destino.'},
+
+{id:'m25',a:'mod',p:'¿Es válido declarar dos implementaciones del mismo servicio en un módulo proveedor?',c:`module app {
+    provides com.api.Traductor with com.impl.TraductorEs, com.impl.TraductorFr;
+}`,
+ o:['No, provides admite solo una implementación','Sí, se listan separadas por comas y ServiceLoader las devuelve todas','Solo si están en módulos distintos','No compila: falta un with por cada una'],k:[1],
+ e:'Una misma cláusula provides puede listar varias implementaciones separadas por comas, o pueden repetirse en cláusulas provides distintas. ServiceLoader las va devolviendo todas al iterar, y el consumidor decide con cuál quedarse.'},
+
+{id:'m26',a:'mod',p:'Quieres generar con jlink una imagen que incluya una biblioteca de terceros sin module-info. ¿Qué hace falta?',
+ o:['jlink la ignora automáticamente','Colocarla en la ruta de módulos para que se trate como módulo automático','No es posible: jlink solo acepta módulos explícitos','Convertirla a .jmod manualmente es obligatorio'],k:[1],
+ e:'jlink solo ensambla módulos, así que un JAR de la ruta de clases no participa en el enlace. Basta con ponerlo en la ruta de módulos para que se convierta en módulo automático y jlink pueda incluirlo, siempre que también lo estén todas sus dependencias.'},
+
+{id:'m27',a:'mod',p:'Un framework de terceros necesita reflexión profunda sobre un paquete de la plataforma que no está abierto. ¿Qué opción de línea de comandos lo permite sin tocar el código?',
+ o:['--add-modules','--add-opens','--patch-module','--upgrade-module-path'],k:[1],
+ e:'--add-opens origen/paquete=destino concede acceso reflexivo profundo en tiempo de ejecución sin modificar el module-info. --add-exports hace lo mismo pero solo para acceso normal, no reflexivo. --add-modules añade módulos al grafo de lectura, no abre paquetes.'},
+
+{id:'m28',a:'mod',p:'¿Para qué sirve la opción --module-source-path de javac?',
+ o:['Para compilar varios módulos de un árbol de fuentes en una sola invocación','Para indicar dónde están los .class ya compilados','Para generar automáticamente el module-info','Para firmar los módulos resultantes'],k:[0],
+ e:'--module-source-path le dice al compilador la organización del árbol de fuentes multi-módulo, de modo que una sola invocación de javac compile todos los módulos relacionados a la vez, resolviendo sus dependencias entre sí.'},
+
+{id:'m29',a:'mod',p:'El módulo A hace "exports p to B". El módulo C hace "requires transitive A". ¿Puede C acceder a los tipos del paquete p?',
+ o:['Sí, porque transitive propaga cualquier acceso de A','No: la exportación calificada solo alcanza a B, transitive no la amplía','Solo si C también aparece en la lista to','Sí, pero solo en tiempo de ejecución'],k:[1],
+ e:'requires transitive propaga la LECTURA de un módulo a quien te requiera, pero no cambia a quién exporta sus paquetes ese módulo. La lista to de una exportación calificada es fija: si C no está en ella, no ve el paquete aunque llegue a leer A por la cadena transitiva.'},
+
+{id:'m30',a:'mod',p:'¿Qué es java.se?',
+ o:['El módulo que contiene todo el código de la aplicación','Un módulo agregador que requires transitive la mayoría de las API estándar','El módulo sin nombre','Una herramienta de línea de comandos'],k:[1],
+ e:'java.se es un módulo agregador de la plataforma: no aporta paquetes propios, solo declara requires transitive de módulos como java.sql, java.xml o java.desktop, así que requerir java.se da acceso a casi toda la API estándar de un golpe.'},
+
+{id:'m31',a:'mod',p:'En una migración ascendente (bottom-up) a módulos, ¿por dónde se empieza?',
+ o:['Por la aplicación principal, dejando las bibliotecas en la ruta de clases','Por las bibliotecas sin dependencias propias, subiendo hacia la aplicación','Da igual el orden','Por el módulo java.base'],k:[1],
+ e:'La estrategia ascendente modulariza primero las hojas del grafo de dependencias, las bibliotecas que no dependen de nada más, y va subiendo. La descendente hace lo contrario: modulariza antes la aplicación y deja el resto como módulos automáticos hasta poder ocuparse de ellos.'},
+
+{id:'m32',a:'mod',p:'¿Dónde debe colocarse el archivo module-info.java?',
+ o:['En cualquier paquete del módulo','En la raíz del árbol de fuentes del módulo','Dentro de META-INF','Puede haber varios, uno por paquete exportado'],k:[1],
+ e:'Cada módulo tiene exactamente un module-info.java y vive en la raíz de su árbol de fuentes, al mismo nivel que los paquetes de primer nivel. No pertenece a ningún paquete con nombre.'},
+
+{id:'m33',a:'mod',p:'¿Qué requisito debe cumplir una clase indicada en un provides ... with ... para que ServiceLoader pueda instanciarla?',
+ o:['Debe ser abstracta','Necesita un constructor público sin argumentos, o un método estático público provider()','Debe implementar Serializable','Debe estar en el módulo consumidor, no en el proveedor'],k:[1],
+ e:'ServiceLoader instancia la implementación con un constructor público sin argumentos, salvo que la clase ofrezca un método estático público llamado provider() que devuelva la instancia, pensado para casos donde la construcción es más compleja o quieres reutilizar una única instancia.'},
+
+{id:'m34',a:'mod',p:'Un JAR sin module-info tiene en su manifiesto Automatic-Module-Name: com.terceros.util. ¿Qué nombre de módulo automático recibe?',
+ o:['El derivado del nombre del archivo','com.terceros.util, el declarado en el manifiesto','Un nombre generado al azar','No se le asigna nombre, va al módulo sin nombre'],k:[1],
+ e:'Si el manifiesto declara Automatic-Module-Name, ese nombre tiene prioridad sobre el que se derivaría del nombre del archivo JAR. Es la forma en que una biblioteca fija su futuro nombre de módulo antes de escribir su propio module-info.'},
+
+{id:'m35',a:'mod',p:'¿Qué muestra jdeps con la opción -s (resumen)?',
+ o:['El listado completo de clases usadas paquete a paquete','Solo las dependencias a nivel de módulo o de JAR, sin detalle de clases','Los métodos deprecados','El árbol de herencia de las clases'],k:[1],
+ e:'jdeps -s (o --summary) condensa el análisis a qué módulos o JAR depende cada uno de qué otros, sin bajar al detalle de paquetes o clases. Para ese detalle hace falta ejecutarlo sin esa opción.'},
+
+{id:'m36',a:'mod',p:'¿Qué lista java --list-modules?',
+ o:['Solo los módulos de tu aplicación','Los módulos observables en la imagen de ejecución actual, incluidos los de la plataforma','Los módulos automáticos detectados en el classpath','Los módulos pendientes de descargar'],k:[1],
+ e:'java --list-modules enumera los módulos que forman la imagen de ejecución en uso, típicamente los de la plataforma más los tuyos si se pasan con --module-path. Es útil para comprobar qué contiene una imagen generada con jlink.'},
+
+{id:'m37',a:'mod',p:'Un módulo B usa una clase pública de un paquete que el módulo A NO exporta. ¿Qué ocurre?',
+ o:['Compila y funciona porque la clase es public','No compila: el paquete no es visible fuera de A','Compila pero lanza IllegalAccessError en ejecución','Funciona solo con reflexión'],k:[1],
+ e:'La visibilidad public de una clase ya no basta por sí sola: si su paquete no está exportado, ningún otro módulo puede ni siquiera compilar contra ella. Es la encapsulación fuerte que introduce el sistema de módulos, más estricta que la del classpath.'},
+
+{id:'m38',a:'mod',p:'Al lanzar una aplicación modular, falta en la ruta de módulos un módulo declarado con requires. ¿Cuándo se detecta el problema?',
+ o:['En tiempo de ejecución, al primer uso de ese módulo','Antes de arrancar el programa, al resolver el grafo de módulos','Nunca, se ignora en silencio','Solo si se usa reflexión sobre él'],k:[1],
+ e:'La resolución de módulos ocurre antes de que arranque el main: si falta un módulo requerido, el lanzador falla de inmediato con un error de resolución, sin llegar a ejecutar una sola línea. Es una de las ventajas de JPMS frente al fallo tardío típico de un NoClassDefFoundError en la ruta de clases.'},
+
+{id:'m39',a:'mod',p:'¿Qué hace ServiceLoader.reload()?',
+ o:['Recarga las clases del módulo','Vuelve a rastrear los proveedores disponibles, descartando la caché de instancias ya creadas','Reinicia la JVM','Elimina los servicios registrados'],k:[1],
+ e:'Un ServiceLoader guarda en caché los proveedores que ya localizó e instanció, así que iterar varias veces sobre el mismo ServiceLoader no los vuelve a crear. reload() limpia esa caché y fuerza un nuevo rastreo, útil si el entorno de proveedores disponibles pudo haber cambiado.'},
+
+{id:'m40',a:'mod',p:'¿Cuál de estas exportaciones es válida?',
+ o:['exports com.tienda.api to com.tienda.web, com.tienda.tests;','exports com.tienda.api to com.tienda.web; exports com.tienda.api to com.tienda.tests;','Las dos son inválidas','exports com.tienda.api, com.tienda.web to com.tienda.tests;'],k:[0],
+ e:'La lista de módulos destino de una exportación calificada se separa por comas dentro de una única cláusula to. Repetir exports del mismo paquete en dos cláusulas distintas no compila, igual que pasa con requires duplicado.'},
+
+/* ---- ampliación 2: l10n ---- */
+{id:'l21',a:'l10n',p:'¿Qué diferencia hay entre Locale.setDefault(Locale.FRANCE) y Locale.setDefault(Locale.Category.FORMAT, Locale.FRANCE)?',
+ o:['Son equivalentes','La primera cambia DISPLAY y FORMAT a la vez; la segunda solo FORMAT','La primera solo cambia DISPLAY','La segunda cambia también el idioma del sistema operativo'],k:[1],
+ e:'setDefault(Locale) sin categoría fija de un golpe el valor por defecto de las dos categorías, DISPLAY y FORMAT. La versión con categoría permite cambiar solo una, por ejemplo para formatear en francés manteniendo los textos de la interfaz en el idioma original.'},
+
+{id:'l22',a:'l10n',p:'¿Qué hace ResourceBundle.getBundle en llamadas sucesivas con el mismo nombre base y locale?',
+ o:['Vuelve a leer el archivo cada vez','Devuelve el bundle cacheado tras la primera carga, sin releer el archivo','Lanza excepción la segunda vez','Combina el contenido con el de la primera llamada'],k:[1],
+ e:'ResourceBundle mantiene una caché interna por nombre base, locale y cargador de clases. Llamadas repetidas devuelven el mismo bundle ya cargado. Para forzar una relectura, por ejemplo tras cambiar el archivo en disco, hay que llamar a ResourceBundle.clearCache().'},
+
+{id:'l23',a:'l10n',p:'Desde Java 9, ¿con qué codificación se leen por defecto los archivos .properties de un ResourceBundle?',
+ o:['ISO-8859-1, como siempre','UTF-8','Depende del locale del sistema','ASCII puro, sin acentos'],k:[1],
+ e:'Antes de Java 9 los .properties se leían como ISO-8859-1 y los caracteres fuera de ese juego había que escaparlos con \\uXXXX mediante la herramienta native2ascii. Desde Java 9 la lectura por defecto es UTF-8, así que los acentos y otros caracteres se pueden escribir directamente en el archivo.'},
+
+{id:'l24',a:'l10n',p:'¿Qué ventaja tiene un ListResourceBundle frente a un archivo .properties?',
+ o:['Es más rápido de leer siempre','Sus valores pueden ser objetos de cualquier tipo, no solo cadenas','No necesita compilarse','Soporta más de un idioma en el mismo archivo'],k:[1],
+ e:'Un ListResourceBundle se implementa en Java sobrescribiendo getContents(), que devuelve pares clave-valor como Object[][]. Al ser código, el valor puede ser cualquier objeto: una lista, un icono o un formato ya construido, algo que un .properties no puede ofrecer porque solo admite texto.'},
+
+{id:'l25',a:'l10n',p:'¿Le afecta el locale a esta línea?',c:`System.out.println(
+    LocalDate.of(2026, 3, 5).format(DateTimeFormatter.ISO_LOCAL_DATE));`,
+ o:['Sí, cambia el orden según el locale por defecto','No: los formateadores ISO predefinidos son independientes del locale','Solo si se le aplica withLocale antes','Lanza excepción sin un locale explícito'],k:[1],
+ e:'Los formateadores ISO como ISO_LOCAL_DATE producen siempre el mismo patrón fijo, aquí 2026-03-05, sin importar el locale por defecto ni uno aplicado con withLocale. Son pensados para intercambio de datos, no para mostrar al usuario.'},
+
+{id:'l26',a:'l10n',p:'¿Qué ocurre?',c:`LocalTime hora = LocalTime.of(14, 30);
+var f = DateTimeFormatter.ofLocalizedTime(FormatStyle.FULL);
+System.out.println(hora.format(f));`,
+ o:['Imprime la hora en formato completo','Lanza excepción: FULL y LONG para hora exigen información de zona que LocalTime no tiene','Imprime solo horas y minutos, ignorando el estilo','No compila'],k:[1],
+ e:'Los estilos FULL y LONG para la parte de hora incluyen el nombre o el desplazamiento de la zona horaria, algo que LocalTime no lleva consigo. Formatearlo con esos estilos falla en tiempo de ejecución. Con SHORT o MEDIUM sí funciona, porque no requieren zona.'},
+
+{id:'l27',a:'l10n',p:'¿Qué imprime?',c:`System.out.println(
+    MessageFormat.format("Hola {0}, tienes {1} mensajes", "Ana"));`,
+ o:['Hola Ana, tienes null mensajes','Hola Ana, tienes {1} mensajes','Lanza IllegalArgumentException por falta de argumentos','Hola Ana, tienes  mensajes'],k:[1],
+ e:'Cuando un patrón referencia un índice para el que no se pasó argumento, MessageFormat no lanza excepción: deja el propio marcador {1} sin sustituir, tal cual aparece en el patrón. Hay que pasar tantos argumentos como el índice más alto usado en el patrón.'},
+
+{id:'l28',a:'l10n',p:'¿Qué ocurre?',c:`Currency c = Currency.getInstance(Locale.of("es"));`,
+ o:['Devuelve el euro por defecto','Lanza IllegalArgumentException: el locale no tiene país','Devuelve null','Devuelve la moneda del sistema operativo'],k:[1],
+ e:'Currency.getInstance(Locale) necesita el componente de país para saber a qué moneda asociarlo, ya que un mismo idioma se habla en países con monedas distintas. Un locale de solo idioma, sin país, hace que el método falle con IllegalArgumentException.'},
+
+{id:'l29',a:'l10n',p:'¿Qué locale usa ResourceBundle.getBundle("Mensajes") cuando no se le pasa un Locale explícito?',
+ o:['Locale.ROOT','El locale por defecto de la JVM, Locale.getDefault()','Locale.US siempre','Lanza excepción: es obligatorio pasar un Locale'],k:[1],
+ e:'La sobrecarga de un solo argumento es equivalente a llamar a getBundle con Locale.getDefault() y el cargador de clases de quien llama. Si se necesita un locale distinto al de la JVM hay que usar la sobrecarga que lo acepta explícitamente.'},
+
+{id:'l30',a:'l10n',p:'¿Qué tiene de particular NumberFormat.getIntegerInstance()?',
+ o:['Formatea igual que getInstance() pero sin separadores de millares','Redondea la parte decimal usando HALF_EVEN antes de formatear como entero','Solo admite parsear, no formatear','Lanza excepción con números decimales'],k:[1],
+ e:'getIntegerInstance() está pensado para valores enteros: si se le pasa un double con decimales, los redondea con el modo HALF_EVEN antes de mostrarlo, y al parsear solo devuelve la parte entera. Es distinto de getInstance(), que sí muestra decimales según la configuración del locale.'},
+
+{id:'l31',a:'l10n',p:'¿Para qué sirve DecimalFormatSymbols?',
+ o:['Para traducir los textos de una interfaz','Para personalizar símbolos como el separador decimal o de millares, independientemente del locale','Para elegir el idioma de un ResourceBundle','Es una clase interna que no se usa directamente'],k:[1],
+ e:'DecimalFormatSymbols permite construir un DecimalFormat con separadores, símbolo de moneda o de porcentaje distintos de los que traería el locale por defecto, por ejemplo para imponer siempre el punto como separador decimal aunque el locale sea español.'},
+
+{id:'l32',a:'l10n',p:'¿Qué imprime?',c:`System.out.println(Locale.of("en", "US").equals(Locale.US));`,
+ o:['false, porque se construyeron de forma distinta','true: equals compara idioma, país, variante y demás campos, no cómo se creó el objeto','Lanza excepción','No compila'],k:[1],
+ e:'Locale sobrescribe equals comparando sus componentes (idioma, país, variante, script y extensiones), así que da igual si el objeto se construyó con Locale.of, con una constante como Locale.US o con Locale.Builder: si los componentes coinciden, son iguales.'},
+
+{id:'l33',a:'l10n',p:'Con Locale.of("es", "ES") más una variante "PREEURO", ¿en qué orden se buscan los candidatos del bundle Precios?',
+ o:['Precios_es_ES_PREEURO, Precios_es_ES, Precios_es, cadena del locale por defecto, Precios','Precios, Precios_es, Precios_es_ES, Precios_es_ES_PREEURO','Precios_es_ES_PREEURO, Precios, cadena del locale por defecto','Precios_PREEURO, Precios_es_ES, Precios_es, Precios'],k:[0],
+ e:'La búsqueda añade primero la variante al candidato más específico y va quitando componentes de derecha a izquierda: idioma-país-variante, idioma-país, idioma, y solo si nada de eso aparece se repite la búsqueda con el locale por defecto antes de caer en el bundle base.'},
+
+{id:'l34',a:'l10n',p:'En una aplicación modular, ¿cómo puede un módulo aportar ResourceBundles para que los use otro módulo, sin exportar el paquete que los contiene?',
+ o:['No es posible en JPMS','Implementando java.util.spi.ResourceBundleProvider y declarándolo como servicio con provides ... with ... en module-info','Con opens es suficiente','Copiando los .properties al módulo consumidor'],k:[1],
+ e:'ResourceBundle.Control, el mecanismo clásico de personalizar la carga, no funciona bien entre módulos. El reemplazo pensado para JPMS es implementar la interfaz de servicio ResourceBundleProvider y registrarla con provides en el module-info del módulo que aporta los bundles, sin necesidad de exportar el paquete donde viven los archivos.'},
+
+{id:'l35',a:'l10n',p:'¿Es seguro compartir una misma instancia de NumberFormat entre varios hilos sin sincronizar?',
+ o:['Sí, es inmutable','No: mantiene estado interno mutable y no es seguro para uso concurrente','Sí, solo si es getInstance() y no getCurrencyInstance()','Solo es un problema con DateFormat, no con NumberFormat'],k:[1],
+ e:'Tanto NumberFormat como DateFormat guardan estado mutable durante el formateo y no están sincronizados internamente. Compartir una instancia entre hilos sin coordinación puede producir resultados corruptos. La práctica recomendada es crear una instancia por hilo o sincronizar el acceso.'},
+
+{id:'l36',a:'l10n',p:'¿Qué imprime?',c:`System.out.println(MessageFormat.format("El precio es de 5''", new Object[0]));`,
+ o:['El precio es de 5\'','El precio es de 5','Lanza excepción de formato','El precio es de 5\'\''],k:[0],
+ e:'Dentro de un patrón de MessageFormat, dos comillas simples seguidas representan una comilla simple literal en el resultado. Es distinto de encerrar un marcador entre una sola comilla a cada lado, que lo que hace es desactivarlo para que se imprima tal cual.'},
+
+{id:'l37',a:'l10n',p:'¿Qué representa el subtag de script en una etiqueta BCP 47 como "sr-Latn-RS"?',
+ o:['Una región dentro del país','El sistema de escritura, aquí alfabeto latino para el serbio de Serbia','La variante dialectal','No es una etiqueta válida'],k:[1],
+ e:'Una etiqueta de idioma puede llevar, además del idioma y el país, un subtag opcional de escritura (script) de cuatro letras, útil para idiomas que se escriben con más de un alfabeto, como el serbio en latino o en cirílico. Locale.forLanguageTag lo interpreta y queda disponible con getScript().'},
+
+{id:'l38',a:'l10n',p:'¿Qué produce DateTimeFormatter.BASIC_ISO_DATE al formatear el 5 de marzo de 2026, frente a ISO_LOCAL_DATE?',
+ o:['Los dos dan 2026-03-05','BASIC_ISO_DATE da 20260305, sin separadores; ISO_LOCAL_DATE da 2026-03-05','BASIC_ISO_DATE incluye la zona horaria','No existe BASIC_ISO_DATE'],k:[1],
+ e:'BASIC_ISO_DATE es la variante compacta del formato ISO, sin guiones. Ambos son independientes del locale, igual que el resto de formateadores ISO predefinidos: representan un formato de intercambio fijo, no una presentación localizada.'},
+
+{id:'l39',a:'l10n',p:'¿Qué aporta Locale.Builder frente a Locale.of?',
+ o:['Nada, son intercambiables en todos los casos','Valida los subtags y lanza IllformedLocaleException si alguno no cumple el formato BCP 47','Permite crear locales sin idioma','Solo sirve para el idioma inglés'],k:[1],
+ e:'Locale.Builder permite construir el locale pieza a pieza con setLanguage, setRegion, setScript o setVariant y comprueba el formato de cada subtag, lanzando IllformedLocaleException ante uno inválido. Locale.of es más directo pero no ofrece esa validación tan estricta.'},
+
+{id:'l40',a:'l10n',p:'Con un patrón fijo como "dd/MM/yyyy", ¿qué cambia al aplicar withLocale con distintos locales?',
+ o:['El orden de día, mes y año','Nada relevante: un patrón puramente numérico no depende del locale, solo los campos de texto como MMMM o EEEE','El separador entre campos','Se lanza excepción si el locale no es compatible'],k:[1],
+ e:'El locale de un DateTimeFormatter afecta a los campos que producen texto, como el nombre del mes con MMMM o el del día de la semana con EEEE, y a detalles como el sistema de numeración. Un patrón enteramente numérico como dd/MM/yyyy imprime los mismos dígitos y el mismo orden sea cual sea el locale.'},
+
+/* ---- ampliación 2: flujo ---- */
+{id:'f23',a:'flujo',p:'¿Qué imprime?',c:`record Punto(int x, int y) {}
+record Linea(Punto a, Punto b) {}
+
+Object o = new Linea(new Punto(1, 2), new Punto(4, 6));
+if (o instanceof Linea(Punto(var x1, var y1), Punto(var x2, var y2))) {
+    System.out.println((x2 - x1) + " " + (y2 - y1));
+}`,
+ o:['3 4','1 2','4 6','No compila'],k:[0],
+ e:'Los patrones de registro se pueden anidar: Linea se deconstruye en sus dos Punto, y cada Punto a su vez en sus componentes x e y, todo en una sola comprobación instanceof. var infiere aquí int para cada componente. El resultado es 4-1=3 y 6-2=4.'},
+
+{id:'f24',a:'flujo',p:'¿Por qué no compila?',c:`enum Estado { NUEVO, EN_CURSO, CERRADO }
+
+Estado est = Estado.EN_CURSO;
+String texto = switch (est) {
+    case NUEVO -> "nuevo";
+    case EN_CURSO -> "en curso";
+};`,
+ o:['Falta break en cada rama','El switch expresión no cubre CERRADO y no tiene default','Los enums no se pueden usar en switch','Falta yield en cada rama'],k:[1],
+ e:'Un switch usado como expresión debe ser exhaustivo. Con un enum eso se cumple listando TODAS sus constantes, y aquí falta CERRADO. Se arregla añadiendo ese case o un default, aunque cubrir todas las constantes explícitamente es preferible porque el compilador avisará si el enum crece.'},
+
+{id:'f25',a:'flujo',p:'¿Compila este método?',c:`static int longitud(Object o) {
+    if (!(o instanceof String s)) {
+        return -1;
+    }
+    return s.length();
+}`,
+ o:['No: s no existe fuera del if','Sí: como el if niega el patrón y termina con return, s queda definida a partir de ahí','No: instanceof no admite negación con patrón','Sí, pero s vale null en la última línea'],k:[1],
+ e:'El análisis de flujo del compilador razona que si la condición negada es verdadera el método termina en el return, así que si se llega a la línea final es porque instanceof SÍ encajó y s está definitivamente asignada. Es el mismo mecanismo que permite usar la variable de patrón tras un && o un continue/break condicionado.'},
+
+{id:'f26',a:'flujo',p:'¿Qué imprime?',c:`int[] datos = {1, 2, 3};
+for (int x : datos) {
+    x = x * 10;
+}
+System.out.println(datos[0] + " " + datos[1] + " " + datos[2]);`,
+ o:['10 20 30','1 2 3','0 0 0','No compila'],k:[1],
+ e:'En un for-each sobre un array de primitivos, la variable del bucle es una copia del valor de cada posición. Reasignarla dentro del cuerpo no toca el array original. Para modificar los elementos hace falta un for clásico con índice.'},
+
+{id:'f27',a:'flujo',p:'¿Por qué no compila este case?',c:`Object o = 5;
+String r = switch (o) {
+    case Integer i, String s -> "número o texto";
+    default -> "otro";
+};`,
+ o:['Falta un when en cada patrón','Un case con patrones de tipo no admite combinar varios en la misma etiqueta','Integer y String no son compatibles en un switch','Falta break'],k:[1],
+ e:'Las etiquetas de case pueden agrupar varias constantes separadas por coma, pero un patrón de tipo no se puede combinar con otro patrón ni con nada más en la misma etiqueta, salvo la combinación especial case null, default. Aquí hay que escribir dos case por separado.'},
+
+{id:'f28',a:'flujo',p:'¿Qué imprime?',c:`for (int i = 0; i < 3; i++) {
+    switch (i) {
+        case 1:
+            break;
+        default:
+            System.out.print(i);
+    }
+}`,
+ o:['0','012','02','01'],k:[2],
+ e:'Dentro de un bucle, un break sin etiqueta dentro de un switch solo sale del switch, no del bucle que lo contiene. Así que i vale 0 y 2 caen en default y se imprimen, e i vale 1 entra en su propio case y no imprime nada. Para salir del bucle desde dentro del switch haría falta una etiqueta en el for y un break con esa etiqueta.'},
+
+{id:'f29',a:'flujo',p:'¿Qué ocurre si más adelante se añade Triangulo a la lista de permits?',c:`sealed interface Figura permits Circulo, Cuadrado {}
+record Circulo(double r) implements Figura {}
+record Cuadrado(double l) implements Figura {}
+
+double area(Figura f) {
+    return switch (f) {
+        case Circulo c -> Math.PI * c.r() * c.r();
+        case Cuadrado q -> q.l() * q.l();
+    };
+}`,
+ o:['Compila igual, Triangulo usaría el área de Cuadrado','Deja de compilar: el switch ya no es exhaustivo y hay que tratar el nuevo caso','Solo falla en tiempo de ejecución','Se ignoran las instancias de Triangulo'],k:[1],
+ e:'Al añadir un nuevo subtipo permitido, cualquier switch exhaustivo sobre esa jerarquía que no lo contemple deja de compilar hasta que se añada su case o un default. Es justo la ventaja de las jerarquías selladas: el compilador señala todos los puntos del código que hay que revisar.'},
+
+{id:'f30',a:'flujo',p:'¿Qué imprime?',c:`int x = 5;
+resultado: {
+    if (x > 3) {
+        System.out.print("grande ");
+        break resultado;
+    }
+    System.out.print("pequeño ");
+}
+System.out.println("fin");`,
+ o:['grande fin','pequeño fin','grande pequeño fin','No compila: break solo vale en bucles y switch'],k:[0],
+ e:'Una etiqueta puede preceder a cualquier sentencia, incluido un bloque simple entre llaves, y break con esa etiqueta sale de él inmediatamente. No hace falta que sea un bucle ni un switch. Aquí se imprime "grande" y se salta el resto del bloque, sin afectar a la línea siguiente.'},
+
+/* ---- ampliación 2: exc ---- */
+{id:'e23',a:'exc',p:'¿Qué ocurre?',c:`class R implements AutoCloseable {
+    public void close() { throw new IllegalStateException("del close"); }
+}
+
+try (R r = new R()) {
+    System.out.println("cuerpo ok");
+}`,
+ o:['La excepción del close se propaga normalmente, sin marcarse como suprimida','Se pierde en silencio porque el cuerpo no falló','Se imprime "cuerpo ok" y el programa sigue como si nada','Lanza NullPointerException'],k:[0],
+ e:'La supresión solo entra en juego cuando el cuerpo Y el cierre fallan a la vez: la del cuerpo se propaga y la del cierre queda guardada como suprimida. Si el cuerpo termina bien y solo falla el close, esa excepción se propaga tal cual, como cualquier otra.'},
+
+{id:'e24',a:'exc',p:'¿Compila este método?',c:`static void procesa() throws java.io.IOException, java.sql.SQLException {
+    try {
+        operacion();
+    } catch (Exception e) {
+        throw e;
+    }
+}
+// operacion() solo declara throws IOException, SQLException`,
+ o:['No: el catch es de Exception, así que debería declarar throws Exception','Sí: el compilador infiere que solo puede relanzarse IOException o SQLException, porque e es efectivamente final','No compila porque Exception no se puede volver a lanzar','Solo compila si el catch usa multi-catch'],k:[1],
+ e:'Desde Java 7, el "rethrow más preciso" analiza qué tipos puede realmente contener la variable capturada, siempre que no se reasigne dentro del catch. Aunque el catch declare Exception, el compilador sabe que solo IOException o SQLException pudieron originarse ahí y no exige declarar el genérico Exception.'},
+
+{id:'e25',a:'exc',p:'¿Qué ocurre al ejecutar?',c:`class Config {
+    static int valor = 10 / 0;
+}
+class Main {
+    public static void main(String[] a) {
+        System.out.println(Config.valor);
+    }
+}`,
+ o:['Imprime 0','Lanza ArithmeticException directamente','Lanza ExceptionInInitializerError, con la ArithmeticException como causa','No compila'],k:[2],
+ e:'Una excepción producida durante la inicialización estática de una clase se envuelve en ExceptionInInitializerError, un Error, no la excepción original. La causa original se recupera con getCause(). Además, tras un fallo así, la clase queda marcada como no inicializable y futuros usos lanzan NoClassDefFoundError.'},
+
+{id:'e26',a:'exc',p:'¿Qué imprime?',c:`class StockException extends Exception {
+    StockException(String msg, Throwable causa) { super(msg, causa); }
+}
+
+try {
+    try {
+        throw new IllegalStateException("sin conexión");
+    } catch (IllegalStateException e) {
+        throw new StockException("no se pudo actualizar el stock", e);
+    }
+} catch (StockException e) {
+    System.out.println(e.getMessage() + " / " + e.getCause().getMessage());
+}`,
+ o:['no se pudo actualizar el stock / sin conexión','sin conexión / no se pudo actualizar el stock','no se pudo actualizar el stock / null','No compila'],k:[0],
+ e:'El constructor Throwable(String, Throwable) está disponible incluso en excepciones propias que lo declaren así, y permite encadenar la causa original. getMessage() devuelve el mensaje de la excepción envolvente y getCause() la excepción original que la provocó, preservando el contexto completo del fallo.'},
+
+{id:'e27',a:'exc',p:'¿Qué imprime?',c:`for (int i = 0; i < 3; i++) {
+    try {
+        if (i == 1) continue;
+        System.out.print(i);
+    } finally {
+        System.out.print("f");
+    }
+}`,
+ o:['0f1f2f','0ff2f','012f','0f f2f'],k:[1],
+ e:'finally se ejecuta siempre al abandonar el try, sea por continue, por break, por una excepción o por terminación normal. En i=0 se imprime "0" y luego "f". En i=1, continue salta la impresión del cuerpo pero no evita el finally, que igualmente imprime "f". En i=2 se repite el patrón de i=0. El resultado es "0f" + "f" + "2f".'},
+
+{id:'e28',a:'exc',p:'Desde Java 15, ¿qué aportan por defecto los mensajes de una NullPointerException?',c:`String s = null;
+s.length();`,
+ o:['Nada nuevo, siguen siendo genéricos','Un mensaje que detalla qué variable o expresión era null, como Cannot invoke String.length() because s is null','El número de línea únicamente','El valor esperado si no hubiera sido null'],k:[1],
+ e:'Los mensajes útiles de NullPointerException, estabilizados en Java 15, describen exactamente qué referencia era null y qué operación se intentaba, en vez de un genérico "NullPointerException" sin más contexto. Ahorra mucho tiempo de depuración en cadenas de llamadas encadenadas.'},
+
+{id:'e29',a:'exc',p:'¿Qué captura este bloque?',c:`try {
+    riesgoso();
+} catch (Throwable t) {
+    System.out.println("capturado: " + t.getClass().getSimpleName());
+}`,
+ o:['Solo las excepciones comprobadas','Cualquier Exception, pero ningún Error','Tanto excepciones como Error, incluidos StackOverflowError u OutOfMemoryError','No compila: Throwable no se puede capturar'],k:[2],
+ e:'Throwable es la raíz de toda la jerarquía, así que un catch de Throwable atrapa también los Error, algo que ni Exception ni RuntimeException hacen. Suele desaconsejarse porque un Error normalmente señala un fallo del que no tiene sentido intentar recuperarse, como quedarse sin memoria.'},
+
+{id:'e30',a:'exc',p:'¿Qué se propaga?',c:`static void m() {
+    try {
+        throw new RuntimeException("original");
+    } finally {
+        throw new IllegalStateException("del finally");
+    }
+}`,
+ o:['Las dos, la del finally como suprimida de la original','Solo la del finally: la original se descarta sin dejar rastro','Solo la original: el finally no puede lanzar','No compila'],k:[1],
+ e:'Cuando un finally lanza su propia excepción, sustituye a la que venía propagándose del try, exactamente igual que haría un return dentro del finally. A diferencia de try-with-resources, aquí no hay ningún mecanismo de supresión: la excepción original simplemente se pierde, sin quedar accesible en ningún sitio.'},
+
+/* ---- ampliación 2: io ---- */
+{id:'i23',a:'io',p:'¿Qué diferencia hay entre Files.list(dir) y Files.walk(dir)?',c:`Stream<Path> hijos = Files.list(dir);
+Stream<Path> todos = Files.walk(dir);`,
+ o:['Son idénticos','Files.list solo devuelve los hijos directos; Files.walk recorre también los subdirectorios','Files.walk no incluye archivos, solo directorios','Files.list no necesita cerrarse y Files.walk sí'],k:[1],
+ e:'Files.list produce un Stream<Path> con el contenido inmediato de un directorio, sin bajar a subcarpetas. Files.walk recorre el árbol completo hasta la profundidad indicada, por defecto sin límite. Los dos devuelven streams perezosos que hay que cerrar con try-with-resources.'},
+
+{id:'i24',a:'io',p:'¿Qué hace Files.mismatch(a, b)?',c:`long pos = Files.mismatch(a, b);
+System.out.println(pos);`,
+ o:['Compara los nombres de los dos archivos','Devuelve -1 si el contenido es idéntico, o la posición del primer byte distinto','Lanza excepción si los archivos difieren','Compara solo las fechas de modificación'],k:[1],
+ e:'Files.mismatch, de Java 12, compara el contenido byte a byte de dos archivos de forma eficiente y devuelve -1 si son idénticos, o el índice del primer byte que difiere. Es más directo que leer y comparar manualmente los bytes con Files.readAllBytes.'},
+
+{id:'i25',a:'io',p:'Desde Java 18, ¿qué codificación usa por defecto un new FileReader(archivo) sin especificar Charset?',c:`var r = new FileReader("datos.txt");`,
+ o:['La del locale del sistema operativo, como antes','UTF-8, salvo que se indique otra explícitamente','ISO-8859-1 siempre','Depende de la extensión del archivo'],k:[1],
+ e:'JEP 400 fija UTF-8 como la codificación por defecto de la plataforma desde Java 18, en vez del comportamiento anterior, que dependía del locale y la configuración del sistema operativo. Aun así, la práctica recomendada sigue siendo pasar el Charset de forma explícita para no depender de defaults.'},
+
+{id:'i26',a:'io',p:'¿Qué ocurre?',c:`Scanner sc = new Scanner("abc 42");
+System.out.println(sc.nextInt());`,
+ o:['Imprime 0','Lanza InputMismatchException y el puntero no avanza sobre ese token','Imprime 42, saltándose "abc"','Lanza NoSuchElementException'],k:[1],
+ e:'nextInt() exige que el siguiente token completo sea un entero válido; como "abc" no lo es, lanza InputMismatchException sin consumirlo. Para saltar el token inválido hay que leerlo con next() antes de reintentar, o usar hasNextInt() para comprobarlo primero.'},
+
+{id:'i27',a:'io',p:'¿Cuándo devuelve null System.console()?',c:`Console con = System.console();
+if (con != null) {
+    con.readPassword("clave: ");
+}`,
+ o:['Nunca, siempre hay una consola disponible','Cuando la JVM no está asociada a una consola real, por ejemplo al redirigir la entrada desde un archivo o ejecutar desde un IDE','Solo en sistemas sin teclado','Cuando no hay permisos de administrador'],k:[1],
+ e:'System.console() devuelve null si el proceso no tiene una consola interactiva asociada, algo habitual al redirigir System.in desde un archivo o al lanzar el programa desde muchos IDE. Por eso hay que comprobar el resultado antes de llamar a métodos como readPassword().'},
+
+{id:'i28',a:'io',p:'¿Qué problema tiene este código?',c:`try (var out = System.out) {
+    out.println("hola");
+}
+System.out.println("adiós");`,
+ o:['No compila: System.out no es AutoCloseable','Cierra la salida estándar; la segunda línea puede no imprimirse o fallar','Imprime "hola" dos veces','Ninguno, es la forma recomendada'],k:[1],
+ e:'PrintStream implementa AutoCloseable, así que compila, pero cerrar System.out cierra el flujo de salida estándar del proceso para el resto del programa. Los flujos estándar no deben cerrarse desde la aplicación: solo hay que cerrar los recursos que uno mismo abre.'},
+
+/* ---- ampliación 2: conc ---- */
+{id:'k25',a:'conc',p:'¿Qué garantiza Thread.setPriority(Thread.MAX_PRIORITY)?',c:`Thread t = new Thread(tarea);
+t.setPriority(Thread.MAX_PRIORITY);
+t.start();`,
+ o:['Que ese hilo se ejecute siempre antes que los demás','Nada garantizado: es solo una sugerencia al planificador, que el sistema operativo puede ignorar','Que el hilo se vuelva daemon','Que el hilo no pueda ser interrumpido'],k:[1],
+ e:'La prioridad de un hilo es una pista para el planificador, no una garantía. El sistema operativo subyacente decide cómo repartir la CPU y puede ignorarla por completo. No hay que diseñar la corrección de un programa contando con un orden de ejecución basado en prioridades.'},
+
+{id:'k26',a:'conc',p:'¿Qué diferencia hay entre Thread.interrupted() y t.isInterrupted()?',c:`if (Thread.interrupted()) {
+    // consulta el hilo actual y BORRA su bandera
+}
+if (t.isInterrupted()) {
+    // consulta t sin borrar nada
+}`,
+ o:['Son sinónimos','interrupted() es estático, consulta el hilo actual y BORRA la bandera; isInterrupted() solo consulta, sin borrarla','isInterrupted() borra la bandera y interrupted() no','interrupted() lanza InterruptedException directamente'],k:[1],
+ e:'El método estático Thread.interrupted() siempre actúa sobre el hilo que lo invoca y, además de devolver el estado, lo resetea a false. El método de instancia isInterrupted() se puede llamar sobre cualquier hilo y deja la bandera intacta. Confundirlos hace que una segunda comprobación no vea la interrupción real.'},
+
+{id:'k27',a:'conc',p:'¿Qué ocurre?',c:`Object candado = new Object();
+candado.wait();`,
+ o:['El hilo espera indefinidamente','Lanza IllegalMonitorStateException: hay que poseer el monitor del objeto','Lanza InterruptedException siempre','No compila'],k:[1],
+ e:'wait(), notify() y notifyAll() solo se pueden invocar desde dentro de un bloque o método synchronized sobre ese mismo objeto, porque necesitan que el hilo posea su monitor. Llamarlos sin tenerlo lanza IllegalMonitorStateException en tiempo de ejecución.'},
+
+{id:'k28',a:'conc',p:'Sin configuración adicional, ¿en qué pool de hilos se ejecuta un stream paralelo?',c:`lista.parallelStream()
+     .map(this::procesar)
+     .collect(Collectors.toList());`,
+ o:['Crea un ExecutorService nuevo cada vez','En el ForkJoinPool común de la aplicación, compartido con otros streams paralelos','En el hilo que llama, sin paralelismo real','En un hilo virtual por cada elemento'],k:[1],
+ e:'Un stream paralelo usa por defecto ForkJoinPool.commonPool(), el mismo que comparten otras tareas paralelas de la aplicación, incluidas otras llamadas a parallel(). Eso puede generar contención si varias partes del programa lo usan a la vez sin coordinación; existe la posibilidad de ejecutar la operación dentro de un pool propio.'},
+
+{id:'k29',a:'conc',p:'¿Qué devuelve CompletableFuture.allOf(f1, f2, f3)?',c:`CompletableFuture<Void> todos =
+    CompletableFuture.allOf(f1, f2, f3);`,
+ o:['Una lista con los tres resultados','Un CompletableFuture<Void> que se completa cuando terminan las tres, sin combinar sus resultados','El resultado del primero en terminar','Un array de resultados'],k:[1],
+ e:'allOf sirve para esperar a que todas terminen, pero su tipo es CompletableFuture<Void>: no agrega los valores. Para obtenerlos hay que llamar a join() o get() sobre cada CompletableFuture original una vez que allOf se completó. anyOf, en cambio, sí devuelve como resultado el valor del primero que termine, tipado como Object.'},
+
+{id:'k30',a:'conc',p:'¿Qué riesgo tiene usar ThreadLocal dentro de las tareas de un ExecutorService de tamaño fijo?',c:`ThreadLocal<String> contexto = new ThreadLocal<>();
+// dentro de una tarea del pool
+contexto.set(usuarioActual);
+// ...
+contexto.remove(); // imprescindible antes de terminar`,
+ o:['Ninguno, cada tarea tiene su propio hilo','Los hilos del pool se reutilizan entre tareas, así que un valor no limpiado puede filtrarse a una tarea posterior','ThreadLocal no funciona con executors','Provoca ConcurrentModificationException'],k:[1],
+ e:'Un pool de tamaño fijo reutiliza los mismos hilos para tareas sucesivas, y un ThreadLocal vive asociado al hilo, no a la tarea. Si no se llama a remove() al terminar, el valor queda disponible para la siguiente tarea que caiga en ese mismo hilo, una fuga de datos y de memoria clásica en servidores de aplicaciones.'},
+
+/* ---- ampliación 2: tipos ---- */
+{id:'t26',a:'tipos',p:'¿Qué efecto tiene una barra invertida al final de una línea dentro de un bloque de texto?',c:`String s = """
+    Hola \\
+    Mundo""";`,
+ o:['Es un error de sintaxis','Suprime el salto de línea, uniendo esa línea con la siguiente','Escapa las comillas triples de cierre','Inserta una tabulación'],k:[1],
+ e:'Dentro de un bloque de texto, una barra invertida al final de una línea suprime el carácter de nueva línea que normalmente se insertaría ahí, uniendo el contenido con el de la línea siguiente sin salto entre medias. Es útil para dividir una línea larga en el código fuente sin que eso afecte al contenido final de la cadena.'},
+
+{id:'t27',a:'tipos',p:'¿Para qué sirve la secuencia \\s dentro de un bloque de texto?',c:`String s = """
+    uno\\s
+    dos""";`,
+ o:['Inserta un salto de línea','Representa un único espacio y evita que se elimine por ser un espacio final de línea','Marca el inicio de la sangría incidental','Es sinónimo de \\t'],k:[1],
+ e:'Los espacios al final de cada línea de un bloque de texto se eliminan automáticamente al compilar. \\s se traduce en un único espacio que el compilador NO recorta, así que sirve para conservar espacios finales que sean significativos, por ejemplo antes de un salto de línea.'},
+
+{id:'t28',a:'tipos',p:'¿Qué relación hay entre "Total: %d".formatted(5) y String.format(...)?',c:`String a = "Total: %d".formatted(5);
+String b = String.format("Total: %d", 5);`,
+ o:['formatted() es más lento pero produce lo mismo','a y b son iguales: formatted() es un método de instancia equivalente a pasar el propio texto como patrón a String.format','No compila la línea de a','formatted() no admite especificadores como %d'],k:[1],
+ e:'formatted(), añadido en Java 15, es azúcar sintáctico: "patrón".formatted(args) hace exactamente lo mismo que String.format(patrón, args), pero permite encadenarlo de forma más legible al final de una cadena, sobre todo con bloques de texto largos.'},
+
+{id:'t29',a:'tipos',p:'¿Qué imprime?',c:`System.out.println(-7 / 2);
+System.out.println(Math.floorDiv(-7, 2));
+System.out.println(-7 % 2);
+System.out.println(Math.floorMod(-7, 2));`,
+ o:['-3, -3, -1 y -1','-3, -4, -1 y 1','-4, -3, 1 y -1','-3, -4, 1 y 1'],k:[1],
+ e:'La división entera trunca hacia cero: -7 / 2 da -3. Math.floorDiv redondea hacia menos infinito, así que da -4. El resto % conserva el signo del dividendo y da -1. Math.floorMod siempre da un resultado del mismo signo que el divisor, aquí positivo: 1. floorDiv y floorMod son la pareja consistente que conviene usar al trabajar con negativos, por ejemplo en aritmética de índices circulares.'},
+
+{id:'t30',a:'tipos',p:'¿Qué imprime?',c:`String a = new String("hola");
+String b = "hola";
+System.out.println(a == b);
+System.out.println(a.intern() == b);`,
+ o:['true y true','false y true','false y false','true y false'],k:[1],
+ e:'new String(...) crea siempre un objeto nuevo en el montón, distinto del literal que vive en el pool de cadenas, así que a == b da false. intern() busca o inserta esa cadena en el pool y devuelve la referencia compartida, que sí coincide con la del literal b.'},
+
+/* ---- ampliación 2: col ---- */
+{id:'c27',a:'col',p:'¿Qué imprime?',c:`List<String> base = new ArrayList<>(List.of("a", "b"));
+List<String> vista = Collections.unmodifiableList(base);
+base.add("c");
+System.out.println(vista);`,
+ o:['[a, b]','[a, b, c]','Lanza ConcurrentModificationException','UnsupportedOperationException al leer vista'],k:[1],
+ e:'Collections.unmodifiableList devuelve una VISTA de solo lectura sobre la lista original, no una copia independiente: los cambios hechos directamente sobre base se reflejan en vista. Lo que impide es modificar a través de la propia vista, con add o set sobre ella. Para una copia realmente inmune a cambios posteriores hace falta List.copyOf(base).'},
+
+{id:'c28',a:'col',p:'¿Qué garantiza el orden de iteración de un PriorityQueue?',
+ o:['El orden natural de sus elementos','Ninguno: solo peek() y poll() garantizan devolver el menor según el orden establecido','El orden de inserción','El orden inverso al de inserción'],k:[1],
+ e:'PriorityQueue se implementa como un montón binario, y su iterador NO recorre los elementos en ningún orden particular. Lo único garantizado es que peek() y poll() siempre entregan el elemento más pequeño según el comparador u orden natural configurado. Confundir esto con un recorrido ordenado es un error frecuente.'},
+
+{id:'c29',a:'col',p:'¿Qué imprime?',c:`List<String> l = new ArrayList<>(List.of("a", "bb", "c"));
+Iterator<String> it = l.iterator();
+while (it.hasNext()) {
+    if (it.next().length() == 1) it.remove();
+}
+System.out.println(l);`,
+ o:['Lanza ConcurrentModificationException','[bb]','[a, c]','[a, bb, c]'],k:[1],
+ e:'A diferencia de llamar a list.remove() dentro de un for-each, usar el propio método remove() del Iterator sí está permitido mientras se recorre: mantiene sincronizado el contador interno del iterador con la modificación. Es la forma correcta de filtrar una colección mientras se itera, junto con removeIf.'}
+
 ];

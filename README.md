@@ -17,8 +17,9 @@ móvil como aplicación y funciona sin conexión.
   sube de caja y se aleja en el tiempo; lo que fallas cae a la caja 0, que es *hoy*, así que
   sigue en la cola de la sesión hasta que lo aciertes. Cuando la cola se vacía, la vista lo
   dice en vez de seguir sirviendo preguntas: ahí es cuando toca volver mañana.
-- **Simulacro** cronometrado a 50 preguntas y 120 minutos, con el 68 % como línea de aprobado.
-  El banco tiene 243 preguntas, así que dos intentos seguidos comparten alrededor del 20 %:
+- **Simulacro** cronometrado a 50 preguntas y 120 minutos, con el 68 % como línea de aprobado
+  (Oracle amplió el tiempo del examen real de 90 a 120 minutos; la app ya usa la cifra vigente).
+  El banco tiene 319 preguntas, así que dos intentos seguidos comparten alrededor del 16 %:
   el porcentaje mide lo que sabes, no lo que recuerdas del intento anterior.
 - **Plan** de 17 bloques que se reparten automáticamente entre hoy y la fecha del examen.
 - **Espectro de objetivos** en la cabecera: diez barras que muestran de un vistazo por dónde flojeas.
@@ -65,8 +66,8 @@ python3 -m http.server 5500
 
 ## Añadir preguntas
 
-Todo el banco está en `js/questions.js` como un array de objetos. Son 243 preguntas,
-entre 20 y 32 por área, con una media de 3,4 por punto del temario y un 82 % con
+Todo el banco está en `js/questions.js` como un array de objetos. Son 319 preguntas,
+entre 28 y 40 por área, con una media de 4,5 por punto del temario y un 76 % con
 fragmento de código:
 
 ```js
@@ -140,3 +141,17 @@ Ni Oracle ni ninguna entidad certificadora respalda este proyecto. Las preguntas
 originales y están pensadas para estudiar, no para reproducir el examen real.
 Vuelca los objetivos oficiales desde la página de Oracle del examen 1Z0-830 antes de
 presentarte, por si han cambiado.
+
+Java, Oracle y 1Z0-830 son marcas registradas de Oracle Corporation. Esta app es un
+proyecto independiente de estudio, no afiliado ni respaldado por Oracle. El mismo
+aviso aparece en el pie de la aplicación y en la descripción del manifest, para que
+llegue también a quien la instale y nunca abra este README.
+
+## Licencia
+
+Todos los derechos reservados por TorresWeb (ver `LICENSE`). Se publica el código
+fuente por transparencia, pero no es software libre: no está permitido redistribuir,
+revender ni publicar derivados sin autorización. Es una decisión deliberada mientras
+no esté decidido si el proyecto se queda en portafolio o se monetiza más adelante
+(por ejemplo, una versión en inglés de pago); es más fácil relajar la licencia después
+que recuperar derechos ya cedidos con una licencia permisiva como MIT.

@@ -5,10 +5,16 @@
    sin conexión: en el metro, en el avión, donde sea.
 
    IMPORTANTE: sube el número de VERSION cada vez que cambies
-   cualquier archivo. Si no, el navegador seguirá sirviendo la
-   copia vieja y no verás tus cambios.
+   cualquier archivo. Si no, el navegador no detectará que este
+   archivo ha cambiado y seguirá sirviendo la copia vieja.
+
+   Este service worker YA NO se activa solo (nada de skipWaiting
+   automático): se queda a la espera hasta que main.js le manda
+   el mensaje SKIP_WAITING, que solo ocurre cuando el usuario
+   pulsa "Actualizar" en el aviso de versión nueva. Así no le
+   cambiamos el código bajo los pies a una pestaña abierta.
    ============================================================ */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = '1z0830-' + VERSION;
 
 const ARCHIVOS = [
@@ -27,11 +33,7 @@ const ARCHIVOS = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(ARCHIVOS))
-      .then(() => self.skipWaiting())
-  );
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARCHIVOS)));
 });
 
 self.addEventListener('activate', e => {
@@ -42,13 +44,23 @@ self.addEventListener('activate', e => {
   );
 });
 
-/* Primero la caché; si no está, red. La app no depende de nada externo. */
+self.addEventListener('message', e => {
+  if(e.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+/* Primero la caché; si no está, red. Solo se guarda en caché una
+   respuesta correcta (res.ok) del propio origen: nunca una externa,
+   nunca un error, nunca una respuesta opaca de la que no se puede
+   comprobar el estado. */
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
+  const mismoOrigen = new URL(e.request.url).origin === self.location.origin;
   e.respondWith(
     caches.match(e.request).then(r => r || fetch(e.request).then(res => {
-      const copia = res.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copia));
+      if(mismoOrigen && res.ok){
+        const copia = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, copia));
+      }
       return res;
     }).catch(() => caches.match('index.html')))
   );

@@ -1,21 +1,22 @@
-MIT License
+Copyright (c) 2026 TorresWeb. Todos los derechos reservados.
 
-Copyright (c) 2026 Alejandro González Sánchez
+Este software y su contenido (incluyendo, entre otros, el banco de preguntas,
+la teoría y los textos de la aplicación) se distribuyen junto con su código
+fuente por transparencia, pero no bajo una licencia de software libre.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+No se concede permiso para usar, copiar, modificar, fusionar, publicar,
+distribuir, sublicenciar y/o vender copias de este software o de su
+contenido, ni para publicar versiones derivadas, sin autorización previa
+y por escrito de TorresWeb.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Queda permitida la clonación del repositorio con fines de estudio personal
+o de revisión del código. Cualquier otro uso —incluida la redistribución,
+la reventa o la publicación de una copia o derivado— requiere autorización
+expresa del titular de los derechos.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALING IN THE
+EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA
+O IMPLÍCITA, INCLUYENDO PERO SIN LIMITARSE A LAS GARANTÍAS DE COMERCIABILIDAD,
+IDONEIDAD PARA UN PROPÓSITO PARTICULAR Y NO INFRACCIÓN. EN NINGÚN CASO EL
+TITULAR DE LOS DERECHOS SERÁ RESPONSABLE DE NINGUNA RECLAMACIÓN, DAÑO U OTRA
+RESPONSABILIDAD DERIVADA DEL USO O DE LA IMPOSIBILIDAD DE USO DE ESTE
 SOFTWARE.

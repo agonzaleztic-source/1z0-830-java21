@@ -8,7 +8,7 @@
        onerror inyectado en el HTML no llega a ejecutarse. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>1Z0-830 · Preparación Java SE 21</title>
-  <meta name="description" content="Temario, banco de preguntas con repetición espaciada y simulacros para la certificación Oracle Certified Professional Java SE 21 Developer.">
+  <meta name="description" content="Temario, banco de preguntas con repetición espaciada y simulacros para la certificación Oracle Certified Professional Java SE 21 Developer. No afiliado ni respaldado por Oracle.">
   <meta name="theme-color" content="#131c24">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
@@ -17,21 +17,24 @@
 </head>
 <body>
 
+<a href="#view" class="skip-link">Saltar al contenido</a>
+<div id="live" class="sr-only" role="status" aria-live="polite"></div>
+
 <div class="wrap">
   <header>
     <h1 class="code">1Z0-830<small>Oracle Certified Professional · Java SE 21 Developer</small></h1>
     <div class="cd">
       <b id="cdDays">—</b>
       <span>días para el examen</span>
-      <br><input type="date" id="examDate">
+      <br><label for="examDate" class="sr-only">Fecha del examen</label><input type="date" id="examDate">
     </div>
   </header>
 
-  <div class="spec" id="spec"></div>
-  <div class="speclab" id="specLab"></div>
+  <div class="spec" id="spec" role="group" aria-label="Espectro de objetivos por área"></div>
+  <div class="speclab" id="specLab" aria-hidden="true"></div>
 
-  <nav id="nav"></nav>
-  <div id="view"></div>
+  <nav id="nav" aria-label="Secciones de la app"></nav>
+  <main id="view" tabindex="-1"></main>
 
   <footer class="datos">
     <h2>Progreso entre dispositivos</h2>
@@ -42,8 +45,16 @@
       <button class="btn" id="btnImport">Importar progreso</button>
       <input type="file" id="fileImport" accept="application/json" hidden>
     </div>
-    <p class="aviso" id="avisoDatos"></p>
+    <p class="aviso" id="avisoDatos" role="status" aria-live="polite"></p>
+    <p class="legal">1Z0-830, Java y Oracle son marcas registradas de Oracle Corporation. Esta
+      aplicación es un proyecto independiente de estudio: no está afiliada ni respaldada por
+      Oracle, y sus preguntas son originales.</p>
   </footer>
+</div>
+
+<div class="banner-act" id="banAct" role="status" hidden>
+  <p>Hay una versión nueva de la app lista.</p>
+  <button class="btn pri" id="btnActualizar">Actualizar</button>
 </div>
 
 <script src="js/storage.js"></script>
